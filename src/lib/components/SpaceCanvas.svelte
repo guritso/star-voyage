@@ -5,12 +5,16 @@
   import { get } from 'svelte/store';
   import type { ShipParams } from '$lib/relativity';
   import { shipMetrics } from '$lib/relativity';
+  import Controls from './Controls.svelte';
+  import Sidebar from './Sidebar.svelte';
+  import ShipDetail from './ShipDetail.svelte';
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
 
   let w = 800;
   let h = 600;
+  let dpr = 1;
 
   // visual scale: years -> pixels (1 ly = 60 px default)
   let scale = 60;
@@ -31,6 +35,7 @@
 
   // when true, canvas will automatically keep the selected ship centered
   let followShip = false;
+  let sidebarOpen = true;
 
   function toCanvas(x: number, y: number) {
     return { x: w / 2 + x + panX, y: h / 2 + y + panY };
@@ -222,6 +227,10 @@
     followShip = false;
   }
 
+  function toggleSidebar() {
+    sidebarOpen = !sidebarOpen;
+  }
+
   const shipBounds = new Map<string, { x: number; y: number; w: number; h: number }>();
 
   function handleClick(e: MouseEvent) {
@@ -247,10 +256,33 @@
     selectedShipId.set(null);
   }
 
+  let _resizeHandler: () => void;
+
   onMount(() => {
-    canvas.width = w;
-    canvas.height = h;
-    ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+    // setup canvas size for crisp rendering on HiDPI screens
+    _resizeHandler = () => {
+      if (!canvas) return;
+      // CSS size (logical pixels)
+      const cssW = canvas.clientWidth || w;
+      const cssH = canvas.clientHeight || h;
+      w = cssW;
+      h = cssH;
+      dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+
+      // set actual pixel size
+      canvas.width = Math.max(1, Math.round(w * dpr));
+      canvas.height = Math.max(1, Math.round(h * dpr));
+      // keep CSS size
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+
+      ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+      // reset any existing transform and scale drawing operations to DPP
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    _resizeHandler();
+    window.addEventListener('resize', _resizeHandler);
 
     unsubShips = ships.subscribe(() => draw());
     unsubTime = simTime.subscribe(() => draw());
@@ -287,6 +319,7 @@
       }
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
+  if (_resizeHandler) window.removeEventListener('resize', _resizeHandler);
     }
     if (unsubShips) unsubShips();
     if (unsubTime) unsubTime();
@@ -294,12 +327,35 @@
   });
 </script>
 
-<div class="border rounded bg-black p-2">
-  <div class="relative">
-    <canvas bind:this={canvas} class="w-full h-auto"></canvas>
+<div class="fixed inset-0 bg-black">
+  <div class="relative w-full h-full">
+    <canvas bind:this={canvas} class="w-full h-full block"></canvas>
+
+    <!-- overlays: Controls (top-left), ShipDetail (top-right), Sidebar (left) -->
+    <div class="absolute left-4 top-4 z-50">
+      <div class="bg-transparent">
+        <Controls />
+      </div>
+    </div>
+
+    <div class="absolute right-4 top-4 z-50 w-72">
+      <ShipDetail />
+    </div>
+
+    <!-- sidebar: floating panel on the left -->
+    {#if sidebarOpen}
+      <div class="absolute left-4 top-20 z-50 w-80 max-h-[70vh] overflow-auto">
+        <Sidebar />
+      </div>
+    {/if}
+
+    <!-- sidebar toggle -->
+    <button class="absolute left-4 top-4 z-60 w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center shadow" on:click={toggleSidebar} aria-label="Toggle sidebar">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
 
     <!-- floating controls bottom-right -->
-    <div class="absolute right-4 bottom-4 flex flex-col gap-2 items-end">
+  <div class="absolute right-4 bottom-4 flex flex-col gap-2 items-end z-50">
       <button
         class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center shadow-lg"
         on:click={centerEarth}
