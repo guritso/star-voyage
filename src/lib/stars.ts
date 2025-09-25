@@ -8,7 +8,7 @@ export type Star = {
 // A short curated list of nearby stars with distances in light-years.
 // Distances are approximate and meant for the simulation.
 export const STARS: Star[] = [
-  { id: 'proxima', name: 'Proxima Centauri', distanceLy: 4.247, description: 'The closest known star to the Sun, part of the Alpha Centauri star system.' },
+  { id: 'alpha', name: 'Alpha Centauri', distanceLy: 4.247, description: 'The closest known star system to the Sun, located in the constellation Centaurus.' },
   { id: 'barnard', name: "Barnard's Star", distanceLy: 5.96, description: 'The second closest known star to the Sun, located in the constellation Ophiuchus.' },
   { id: 'wolf359', name: 'Wolf 359', distanceLy: 7.78, description: 'A red dwarf star in the constellation Leo, one of the closest stars to the Sun.' },
   { id: 'sirius', name: 'Sirius', distanceLy: 8.58, description: 'The brightest star in the night sky, located in the constellation Canis Major.' },
