@@ -137,61 +137,122 @@
     // draw ships
     const shipList = get(ships);
     const t = get(simTime);
+
+    // First pass: collect ships that have arrived per star to determine stacking order
+    const arrivedByStar = new Map<string, string[]>();
+    shipList.forEach((ship: ShipParams) => {
+      const star = STARS.find((s) => s.id === ship.starId);
+      if (!star) return;
+      const metrics = shipMetrics(ship, star.distanceLy, t);
+      const arrived = metrics.distanceRemainingLy <= 1e-9 || metrics.distanceCoveredLy >= star.distanceLy;
+      if (arrived) {
+        const list = arrivedByStar.get(star.id) ?? [];
+        list.push(ship.id);
+        arrivedByStar.set(star.id, list);
+      }
+    });
+
+    // Second pass: render ships (arrived get parked to the left of the star, smaller, stacked side-by-side)
     shipList.forEach((ship: ShipParams, idx) => {
       const star = STARS.find((s) => s.id === ship.starId);
       if (!star) return;
-  const spos = starPosition(star.distanceLy, STARS.indexOf(star));
 
-  const metrics = shipMetrics(ship, star.distanceLy, t);
-  const fraction = Math.min(1, metrics.distanceCoveredLy / star.distanceLy);
-
-  const sx = 0 + (spos.x - 0) * fraction;
-  const sy = 0 + (spos.y - 0) * fraction;
-  // apply zoom
-  const sxz = sx * (scale / 60);
-  const syz = sy * (scale / 60);
-  const cpos = toCanvas(sxz, syz);
+      const spos = starPosition(star.distanceLy, STARS.indexOf(star));
+      const metrics = shipMetrics(ship, star.distanceLy, t);
+      const fraction = Math.min(1, metrics.distanceCoveredLy / star.distanceLy);
 
       // ship color
       const hue = (idx * 73) % 360;
       const fill = `hsl(${hue} 70% 60%)`;
       const stroke = `hsl(${hue} 60% 40%)`;
 
-  // compute angle towards star (in world/zoomed coords)
-  const starXz = spos.x * (scale / 60);
-  const starYz = spos.y * (scale / 60);
-  const angle = Math.atan2(starYz - syz, starXz - sxz);
+      // Determine if the ship has arrived
+      const arrived = fraction >= 1 - 1e-9 || metrics.distanceRemainingLy <= 1e-9;
 
-      ctx.save();
-      ctx.translate(cpos.x, cpos.y);
-      ctx.rotate(angle);
+      if (arrived) {
+        // Park the ship to the left of the star, smaller, stacking horizontally
+        const starXz = spos.x * (scale / 60);
+        const starYz = spos.y * (scale / 60);
+        const cstar = toCanvas(starXz, starYz);
 
-      // draw triangle pointing to the right (rotated by angle)
-      ctx.fillStyle = fill;
-      ctx.beginPath();
-      ctx.moveTo(8, 0);
-      ctx.lineTo(-6, -5);
-      ctx.lineTo(-6, 5);
-      ctx.closePath();
-      ctx.fill();
+        const arr = arrivedByStar.get(star.id) ?? [];
+        const parkedIndex = Math.max(0, arr.indexOf(ship.id));
+        const spacing = 12; // tighter horizontal spacing between parked ships
+        const baseLeftOffset = 10; // start a bit closer to the star center
+        const parkedX = cstar.x - (baseLeftOffset + parkedIndex * spacing);
+        const parkedY = cstar.y; // keep aligned horizontally with the star label above/right
 
-      // stroke for clarity
-      ctx.strokeStyle = stroke;
-      ctx.lineWidth = 1;
-      ctx.stroke();
+        // draw a smaller triangle pointing upwards (to occupy less horizontal space)
+        ctx.save();
+        ctx.translate(parkedX, parkedY);
+        ctx.fillStyle = fill;
+        ctx.beginPath();
+        // Upward-pointing tiny triangle
+        ctx.moveTo(0, -4);   // tip up
+        ctx.lineTo(-3, 3);   // left base
+        ctx.lineTo(3, 3);    // right base
+        ctx.closePath();
+        ctx.fill();
 
-      // if selected, draw a thin white outline
-      if ($selectedShipId === ship.id) {
-        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = 1;
         ctx.stroke();
+
+        if ($selectedShipId === ship.id) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // tighter bounding box for the smaller parked icon
+        const boxW = 10, boxH = 10;
+        shipBounds.set(ship.id, { x: parkedX - boxW / 2, y: parkedY - boxH / 2, w: boxW, h: boxH });
+      } else {
+        // En-route rendering along the trajectory towards the star
+        const sx = 0 + (spos.x - 0) * fraction;
+        const sy = 0 + (spos.y - 0) * fraction;
+        // apply zoom
+        const sxz = sx * (scale / 60);
+        const syz = sy * (scale / 60);
+        const cpos = toCanvas(sxz, syz);
+
+        // compute angle towards star (in world/zoomed coords)
+        const starXz = spos.x * (scale / 60);
+        const starYz = spos.y * (scale / 60);
+        const angle = Math.atan2(starYz - syz, starXz - sxz);
+
+        ctx.save();
+        ctx.translate(cpos.x, cpos.y);
+        ctx.rotate(angle);
+
+        // draw triangle pointing to the right (rotated by angle)
+        ctx.fillStyle = fill;
+        ctx.beginPath();
+        ctx.moveTo(8, 0);
+        ctx.lineTo(-6, -5);
+        ctx.lineTo(-6, 5);
+        ctx.closePath();
+        ctx.fill();
+
+        // stroke for clarity
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // if selected, draw a thin white outline
+        if ($selectedShipId === ship.id) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+        }
+
+        ctx.restore();
+
+        // store bounding box for click detection (make it a bit larger)
+        const boxSize = 18;
+        shipBounds.set(ship.id, { x: cpos.x - boxSize / 2, y: cpos.y - boxSize / 2, w: boxSize, h: boxSize });
       }
-
-      ctx.restore();
-
-      // store bounding box for click detection (make it a bit larger)
-      const boxSize = 18;
-      shipBounds.set(ship.id, { x: cpos.x - boxSize / 2, y: cpos.y - boxSize / 2, w: boxSize, h: boxSize });
     });
   }
 
