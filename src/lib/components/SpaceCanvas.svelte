@@ -33,6 +33,8 @@
   let unsubTime: any;
   let unsubSelected: any;
 
+  let prevOverflow: string | null = null;
+
   // when true, canvas will automatically keep the selected ship centered
   let followShip = false;
   let sidebarOpen = true;
@@ -259,6 +261,12 @@
   let _resizeHandler: () => void;
 
   onMount(() => {
+    // hide page scrollbar while this fullscreen canvas is active
+    if (typeof document !== 'undefined') {
+      prevOverflow = document.documentElement.style.overflow || document.body.style.overflow || null;
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+    }
     // setup canvas size for crisp rendering on HiDPI screens
     _resizeHandler = () => {
       if (!canvas) return;
@@ -324,28 +332,46 @@
     if (unsubShips) unsubShips();
     if (unsubTime) unsubTime();
     if (unsubSelected) unsubSelected();
+    // restore overflow
+    if (typeof document !== 'undefined') {
+      if (prevOverflow !== null) {
+        document.documentElement.style.overflow = prevOverflow;
+        document.body.style.overflow = prevOverflow;
+      } else {
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+      }
+    }
   });
 </script>
 
-<div class="fixed inset-0 bg-black">
+<div class="fixed inset-0 bg-black overflow-hidden">
   <div class="relative w-full h-full">
     <canvas bind:this={canvas} class="w-full h-full block"></canvas>
 
     <!-- overlays: Controls (top-left), ShipDetail (top-right), Sidebar (left) -->
-    <div class="absolute left-4 top-4 z-50">
+    <div class="absolute left-16 top-4 z-50">
       <div class="bg-transparent">
         <Controls />
       </div>
     </div>
 
+      <style>
+        /* visually hide scrollbar but keep scrolling functional */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      </style>
+
     <div class="absolute right-4 top-4 z-50 w-72">
       <ShipDetail />
     </div>
 
-    <!-- sidebar: floating panel on the left -->
+    <!-- sidebar: floating panel on the left (scrollbar visually hidden) -->
     {#if sidebarOpen}
-      <div class="absolute left-4 top-20 z-50 w-80 max-h-[70vh] overflow-auto">
-        <Sidebar />
+      <div class="absolute left-4 top-20 bottom-4 z-50 w-80 hide-scrollbar pr-3" style="overflow:auto; scrollbar-width:none; -ms-overflow-style:none;">
+        <div class="h-full">
+          <Sidebar />
+        </div>
       </div>
     {/if}
 

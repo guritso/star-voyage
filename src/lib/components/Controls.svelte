@@ -92,12 +92,18 @@
       </svg>
     </button>
   </div>
-
-  <div class="ml-4 flex items-center gap-2">
-    <label for="sim-speed" class="text-sm text-gray-300">Sim speed (years/sec)</label>
-    <div class="flex items-center gap-2">
-      <input id="sim-speed" type="range" min="0.01" max="1000" step="0.01" bind:value={speedVal} class="mx-2" />
+  <div class="ml-4 flex items-center gap-4">
+    <div class="flex flex-col text-right">
+      <div class="text-sm text-gray-300">Sim time</div>
+      <div class="text-white text-sm">{$simTime.toFixed(3)} yr</div>
     </div>
-    <div class="text-sm text-gray-300">{speedVal.toFixed(2)} y/s</div>
+
+    <div class="flex items-center gap-2">
+      <label for="sim-speed" class="text-sm text-gray-300">Sim speed (years/sec)</label>
+      <div class="flex items-center gap-2">
+        <input id="sim-speed" type="range" min="0.01" max="1000" step="0.01" bind:value={speedVal} class="mx-2" />
+      </div>
+      <div class="text-sm text-gray-300">{speedVal.toFixed(2)} y/s</div>
+    </div>
   </div>
 </div>
