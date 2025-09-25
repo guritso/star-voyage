@@ -356,12 +356,6 @@
       </div>
     </div>
 
-      <style>
-        /* visually hide scrollbar but keep scrolling functional */
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      </style>
-
     <div class="absolute right-4 top-4 z-50 w-72">
       <ShipDetail />
     </div>
@@ -413,3 +407,12 @@
     </div>
   </div>
 </div>
+
+<style>
+  /* visually hide scrollbar but keep scrolling functional */
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* ensure fullscreen canvas container covers viewport without causing page scroll */
+  .fixed.inset-0.overflow-hidden { touch-action: none; }
+</style>
