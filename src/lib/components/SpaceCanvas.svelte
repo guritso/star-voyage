@@ -27,6 +27,10 @@
 
   let unsubShips: any;
   let unsubTime: any;
+  let unsubSelected: any;
+
+  // when true, canvas will automatically keep the selected ship centered
+  let followShip = false;
 
   function toCanvas(x: number, y: number) {
     return { x: w / 2 + x + panX, y: h / 2 + y + panY };
@@ -45,6 +49,34 @@
     // background
     ctx.fillStyle = '#030314';
     ctx.fillRect(0, 0, w, h);
+    // If we're following a ship, update pan so the ship remains centered
+    if (followShip && $selectedShipId) {
+      const shipList = get(ships);
+      const ship = shipList.find((s: ShipParams) => s.id === $selectedShipId);
+      if (ship) {
+        const star = STARS.find((s) => s.id === ship.starId);
+        if (star) {
+          const spos = starPosition(star.distanceLy, STARS.indexOf(star));
+          const t = get(simTime);
+          const metrics = shipMetrics(ship, star.distanceLy, t);
+          const fraction = Math.min(1, metrics.distanceCoveredLy / star.distanceLy);
+          const sx = 0 + (spos.x - 0) * fraction;
+          const sy = 0 + (spos.y - 0) * fraction;
+          // apply zoom same way draw does
+          const sxz = sx * (scale / 60);
+          const syz = sy * (scale / 60);
+          // center ship by setting pan so that toCanvas(sxz, syz) => center
+          panX = -sxz;
+          panY = -syz;
+        } else {
+          // star gone, stop following
+          followShip = false;
+        }
+      } else {
+        // ship not found, stop following
+        followShip = false;
+      }
+    }
 
   // Earth at scene origin (apply pan/zoom via toCanvas)
   const earthPos = toCanvas(0, 0);
@@ -179,6 +211,17 @@
     e.preventDefault();
   }
 
+  function centerEarth() {
+    // reset pan so earth (scene origin) is centered in canvas
+    panX = 0;
+    panY = 0;
+    draw();
+  }
+
+  function stopFollow() {
+    followShip = false;
+  }
+
   const shipBounds = new Map<string, { x: number; y: number; w: number; h: number }>();
 
   function handleClick(e: MouseEvent) {
@@ -211,6 +254,16 @@
 
     unsubShips = ships.subscribe(() => draw());
     unsubTime = simTime.subscribe(() => draw());
+    unsubSelected = selectedShipId.subscribe((id) => {
+      // when user selects a ship by clicking, start following it automatically
+      if (id) {
+        followShip = true;
+      } else {
+        // if deselected, stop following
+        followShip = false;
+      }
+      draw();
+    });
 
     // pointer events for pan
     canvas.addEventListener('pointerdown', onPointerDown);
@@ -237,9 +290,44 @@
     }
     if (unsubShips) unsubShips();
     if (unsubTime) unsubTime();
+    if (unsubSelected) unsubSelected();
   });
 </script>
 
 <div class="border rounded bg-black p-2">
-  <canvas bind:this={canvas} class="w-full h-auto"></canvas>
+  <div class="relative">
+    <canvas bind:this={canvas} class="w-full h-auto"></canvas>
+
+    <!-- floating controls bottom-right -->
+    <div class="absolute right-4 bottom-4 flex flex-col gap-2 items-end">
+      <button
+        class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center shadow-lg"
+        on:click={centerEarth}
+        aria-label="Center on Earth"
+        title="Center on Earth"
+      >
+        <!-- GPS / pin icon (map pin with center dot) -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <!-- pin outline -->
+          <path d="M12 2C8.686 2 6 4.686 6 8c0 4.418 6 12 6 12s6-7.582 6-12c0-3.314-2.686-6-6-6z" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
+          <!-- center circle -->
+          <circle cx="12" cy="8" r="2" fill="currentColor" />
+        </svg>
+      </button>
+
+      {#if followShip}
+        <button
+          class="w-10 h-10 rounded-full bg-red-600 hover:bg-red-500 flex items-center justify-center shadow-lg"
+          on:click={stopFollow}
+          aria-label="Stop following ship"
+          title="Stop following ship"
+        >
+          <!-- Stop / X icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M6 6l12 12M6 18L18 6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </button>
+      {/if}
+    </div>
+  </div>
 </div>
