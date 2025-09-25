@@ -106,25 +106,32 @@
       // apply zoom to positions
       const sposZoomed = { x: pos.x * (scale / 60), y: pos.y * (scale / 60) };
       const cpos = toCanvas(sposZoomed.x, sposZoomed.y);
-      // default star style
+      // default star style (star dot)
       ctx.fillStyle = '#fff';
       ctx.beginPath();
       ctx.arc(cpos.x, cpos.y, 3, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#ddd';
-      ctx.fillText(`${s.name} (${s.distanceLy} ly)`, cpos.x + 6, cpos.y + 4);
 
-      // record bounding circle for click detection
-      starBounds.set(s.id, { x: cpos.x, y: cpos.y, r: 6 });
-
-      // if selected star, draw highlight ring
+      // if selected star, draw a subtle highlight behind the label so it doesn't overlap text
       if ($selectedStarId === s.id) {
         ctx.beginPath();
-        ctx.arc(cpos.x, cpos.y, 8, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-        ctx.lineWidth = 1.2;
+        // smaller radius so it doesn't reach the text
+        const ringR = 5;
+        ctx.arc(cpos.x, cpos.y, ringR, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+        ctx.lineWidth = 1;
+        // dashed ring for subtlety
+        ctx.setLineDash([3, 2]);
         ctx.stroke();
+        ctx.setLineDash([]);
       }
+
+      // label (draw after highlight so text stays on top)
+      ctx.fillStyle = '#ddd';
+      ctx.fillText(`${s.name} (${s.distanceLy} ly)`, cpos.x + 8, cpos.y + 4);
+
+      // record bounding circle for click detection (slightly larger than dot)
+      starBounds.set(s.id, { x: cpos.x, y: cpos.y, r: 6 });
     });
 
     // draw ships
