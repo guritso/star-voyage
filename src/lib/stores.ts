@@ -1,0 +1,14 @@
+import { writable } from 'svelte/store';
+import type { ShipParams } from './relativity';
+
+// Global simulation time in years
+export const simTime = writable<number>(0);
+
+// Simulation speed: how many simulated years pass per real second
+export const simSpeed = writable<number>(0.1); // default 0.1 year per second
+
+// Ships
+export const ships = writable<ShipParams[]>([]);
+
+// Selected ship id
+export const selectedShipId = writable<string | null>(null);
