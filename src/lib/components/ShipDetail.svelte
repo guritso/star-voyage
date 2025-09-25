@@ -42,8 +42,8 @@
       <div>Destination: {getStarById(ship.starId)?.name}</div>
       <div>Speed: {formatPercent(ship.speedFraction)}</div>
       {#if metrics}
-  <div>Time elapsed (Earth): {formatYears(metrics.timeTerraYears)} <span class="text-gray-400">({yearsToDays(metrics.timeTerraYears)})</span></div>
-  <div>Time elapsed (Ship): {formatYears(metrics.timeShipYears)} <span class="text-gray-400">({yearsToDays(metrics.timeShipYears)})</span></div>
+        <div>Time elapsed (Earth): {formatYears(metrics.timeTerraYears)} <span class="text-gray-400">({yearsToDays(metrics.timeTerraYears)})</span></div>
+        <div>Time elapsed (Ship): {formatYears(metrics.timeShipYears)} <span class="text-gray-400">({yearsToDays(metrics.timeShipYears)})</span></div>
         <div>Distance covered: {formatLy(metrics.distanceCoveredLy)}</div>
         <div>Distance remaining: {formatLy(metrics.distanceRemainingLy)}</div>
         <div>Lorentz γ: {formatGamma(metrics.lorentz)}</div>
@@ -52,6 +52,4 @@
       {/if}
     </div>
   </div>
-{:else}
-  <div class="p-3 bg-gray-900 rounded text-sm text-gray-200">Click a ship to see details</div>
 {/if}

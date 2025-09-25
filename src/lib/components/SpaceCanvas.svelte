@@ -1,13 +1,14 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { STARS } from '$lib/stars';
-  import { ships, selectedShipId, simTime } from '$lib/stores';
+  import { ships, selectedShipId, simTime, selectedStarId, targetStarId } from '$lib/stores';
   import { get } from 'svelte/store';
   import type { ShipParams } from '$lib/relativity';
   import { shipMetrics } from '$lib/relativity';
   import Controls from './Controls.svelte';
   import Sidebar from './Sidebar.svelte';
   import ShipDetail from './ShipDetail.svelte';
+  import StarDetail from './StarDetail.svelte';
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
@@ -32,8 +33,12 @@
   let unsubShips: any;
   let unsubTime: any;
   let unsubSelected: any;
+  let unsubStar: any;
 
   let prevOverflow: string | null = null;
+
+  // bounding boxes for star click detection
+  const starBounds = new Map<string, { x: number; y: number; r: number }>();
 
   // when true, canvas will automatically keep the selected ship centered
   let followShip = false;
@@ -101,12 +106,25 @@
       // apply zoom to positions
       const sposZoomed = { x: pos.x * (scale / 60), y: pos.y * (scale / 60) };
       const cpos = toCanvas(sposZoomed.x, sposZoomed.y);
+      // default star style
       ctx.fillStyle = '#fff';
       ctx.beginPath();
       ctx.arc(cpos.x, cpos.y, 3, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = '#ddd';
       ctx.fillText(`${s.name} (${s.distanceLy} ly)`, cpos.x + 6, cpos.y + 4);
+
+      // record bounding circle for click detection
+      starBounds.set(s.id, { x: cpos.x, y: cpos.y, r: 6 });
+
+      // if selected star, draw highlight ring
+      if ($selectedStarId === s.id) {
+        ctx.beginPath();
+        ctx.arc(cpos.x, cpos.y, 8, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
     });
 
     // draw ships
@@ -242,20 +260,39 @@
       return;
     }
 
-    const rect = canvas.getBoundingClientRect();
-    // map client coordinates to canvas coordinate space (account for CSS scaling)
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
+  const rect = canvas.getBoundingClientRect();
+  // Use CSS pixel coordinates to match how drawing positions (cpos) are calculated.
+  // cpos and bounds are computed in CSS pixels (we use ctx.setTransform(dpr,...) for HiDPI rendering),
+  // so convert client coordinates to CSS pixels by subtracting rect origin.
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
 
+    // check stars first (circular hit test)
+    for (const [id, b] of starBounds.entries()) {
+      const dx = x - b.x;
+      const dy = y - b.y;
+      if (dx * dx + dy * dy <= b.r * b.r) {
+        selectedStarId.set(id);
+        targetStarId.set(id);
+        // deselect ship selection
+        selectedShipId.set(null);
+        // immediately redraw so highlight appears on a simple click
+        draw();
+        return;
+      }
+    }
+
+    // then ships (rect hit test)
     for (const [id, b] of shipBounds.entries()) {
       if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) {
         selectedShipId.set(id);
+        draw();
         return;
       }
     }
     selectedShipId.set(null);
+    selectedStarId.set(null);
+    draw();
   }
 
   let _resizeHandler: () => void;
@@ -304,6 +341,8 @@
       }
       draw();
     });
+  // redraw when selected star changes
+  unsubStar = selectedStarId.subscribe(() => draw());
 
     // pointer events for pan
     canvas.addEventListener('pointerdown', onPointerDown);
@@ -356,13 +395,20 @@
       </div>
     </div>
 
+    <!-- unified detail panel: ship -> star -> placeholder -->
     <div class="absolute right-4 top-4 z-50 w-72">
-      <ShipDetail />
+      {#if $selectedShipId}
+        <ShipDetail />
+      {:else if $selectedStarId}
+        <StarDetail />
+      {:else}
+        <div class="p-3 bg-gray-900 rounded text-sm text-gray-200">Click a ship to see details</div>
+      {/if}
     </div>
 
     <!-- sidebar: floating panel on the left (scrollbar visually hidden) -->
     {#if sidebarOpen}
-      <div class="absolute left-4 top-20 bottom-4 z-50 w-80 hide-scrollbar pr-3" style="overflow:auto; scrollbar-width:none; -ms-overflow-style:none;">
+      <div class="absolute left-4 top-20 bottom-4 z-50 w-96 hide-scrollbar pr-3" style="overflow-y:auto; overflow-x:hidden; scrollbar-width:none; -ms-overflow-style:none;">
         <div class="h-full">
           <Sidebar />
         </div>
