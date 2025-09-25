@@ -1,11 +1,16 @@
 <script lang="ts">
   import { selectedShipId, ships, simTime } from '$lib/stores';
   import { STARS, getStarById } from '$lib/stars';
-  import { shipMetrics } from '$lib/relativity';
+  import { shipMetrics, properTimeFactor } from '$lib/relativity';
 
   // Use Svelte auto-subscription for stores
   $: ship = $selectedShipId ? $ships.find((s) => s.id === $selectedShipId) : null;
   $: metrics = ship ? shipMetrics(ship, getStarById(ship.starId)?.distanceLy ?? 0, $simTime) : null;
+  // Clamp displayed elapsed times to arrival so they stop increasing after arrival
+  $: tauFactor = ship ? properTimeFactor(ship.speedFraction) : 1;
+  $: arrivalElapsedTerra = ship && metrics ? Math.max(0, (metrics.timeOfArrivalTerra - ship.startTime)) : 0;
+  $: displayTimeTerra = ship && metrics ? Math.min(metrics.timeTerraYears, arrivalElapsedTerra) : 0;
+  $: displayTimeShip = ship && metrics ? Math.min(metrics.timeShipYears, arrivalElapsedTerra * tauFactor) : 0;
 
   function formatPercent(frac: number) {
     // show percentage with 3 significant digits
@@ -42,8 +47,8 @@
       <div>Destination: {getStarById(ship.starId)?.name}</div>
       <div>Speed: {formatPercent(ship.speedFraction)}</div>
       {#if metrics}
-        <div>Time elapsed (Earth): {formatYears(metrics.timeTerraYears)} <span class="text-gray-400">({yearsToDays(metrics.timeTerraYears)})</span></div>
-        <div>Time elapsed (Ship): {formatYears(metrics.timeShipYears)} <span class="text-gray-400">({yearsToDays(metrics.timeShipYears)})</span></div>
+        <div>Time elapsed (Earth): {formatYears(displayTimeTerra)} <span class="text-gray-400">({yearsToDays(displayTimeTerra)})</span></div>
+        <div>Time elapsed (Ship): {formatYears(displayTimeShip)} <span class="text-gray-400">({yearsToDays(displayTimeShip)})</span></div>
         <div>Distance covered: {formatLy(metrics.distanceCoveredLy)}</div>
         <div>Distance remaining: {formatLy(metrics.distanceRemainingLy)}</div>
         <div>Lorentz γ: {formatGamma(metrics.lorentz)}</div>
