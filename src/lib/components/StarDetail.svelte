@@ -2,8 +2,8 @@
   import type { Star } from '$lib/stars';
   import { selectedStarId } from '$lib/stores';
   import { STARS, getStarById } from '$lib/stars';
-  // reactive derived
-  $: star = $selectedStarId ? getStarById($selectedStarId) : null;
+  // runes-based derived with explicit typing
+  let star: Star | null = $derived.by<Star | null>(() => ($selectedStarId ? getStarById($selectedStarId) ?? null : null));
 </script>
 
 {#if star}

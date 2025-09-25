@@ -4,15 +4,17 @@
   import { get } from 'svelte/store';
   import type { ShipParams } from '$lib/relativity';
 
-  let name = '';
+  let name = $state('');
   // initialize select to store-backed target so clicks on canvas can prefill
-  let starId = STARS[0].id;
+  let starId = $state(STARS[0].id);
 
   // keep local starId in sync with the global targetStarId
-  $: if ($targetStarId && $targetStarId !== starId) {
-    starId = $targetStarId;
-  }
-  let speed = 0.5; // fraction of c
+  $effect(() => {
+    if ($targetStarId && $targetStarId !== starId) {
+      starId = $targetStarId;
+    }
+  });
+  let speed = $state(0.5); // fraction of c
 
   function addShip() {
     if (!starId) return;
@@ -56,7 +58,7 @@
               <label for="ship-speed" class="text-sm text-gray-300">Speed (fraction of c)</label>
               <input id="ship-speed" type="number" min="0.001" max="0.99999" step="0.001" bind:value={speed} class="w-full p-2 rounded bg-gray-800 text-white" />
             </div>
-            <button class="mt-2 w-full bg-blue-600 text-white p-2 rounded" on:click={addShip}>Add Ship</button>
+            <button class="mt-2 w-full bg-blue-600 text-white p-2 rounded" onclick={addShip}>Add Ship</button>
 
             <!-- star detail intentionally omitted here to avoid duplication; rendered in top-right area -->
           </div>
@@ -68,13 +70,13 @@
     <ul class="mt-2 space-y-2">
       {#each $ships as s}
         <li class="flex items-center justify-between bg-gray-800 p-2 rounded">
-          <button type="button" class="text-left w-full cursor-pointer select-none hover:bg-gray-700/40 rounded px-1 py-0.5" on:click={() => selectedShipId.set(s.id)} title="Select and focus ship">
+          <button type="button" class="text-left w-full cursor-pointer select-none hover:bg-gray-700/40 rounded px-1 py-0.5" onclick={() => selectedShipId.set(s.id)} title="Select and focus ship">
             <div class="text-white">{s.name}</div>
             <div class="text-xs text-gray-400">to {s.starId} @ {Math.round(s.speedFraction * 1000) / 10}% c</div>
           </button>
           <div class="flex gap-2">
-            <button class="text-sm px-2 bg-blue-600 hover:bg-blue-500 rounded text-white" on:click|stopPropagation={() => selectedShipId.set(s.id)}>Focus</button>
-            <button class="text-sm px-2 bg-red-600 rounded text-white" on:click|stopPropagation={() => removeShip(s.id)}>Remove</button>
+            <button class="text-sm px-2 bg-blue-600 hover:bg-blue-500 rounded text-white" onclick={() => selectedShipId.set(s.id)}>Focus</button>
+            <button class="text-sm px-2 bg-red-600 rounded text-white" onclick={() => removeShip(s.id)}>Remove</button>
           </div>
         </li>
       {/each}

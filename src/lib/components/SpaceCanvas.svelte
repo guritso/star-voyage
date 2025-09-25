@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  
   import { STARS } from '$lib/stars';
   import { ships, selectedShipId, simTime, selectedStarId, targetStarId } from '$lib/stores';
   import { get } from 'svelte/store';
@@ -30,19 +30,17 @@
   let panStartY = 0;
   let didDrag = false;
 
-  let unsubShips: any;
-  let unsubTime: any;
-  let unsubSelected: any;
-  let unsubStar: any;
+  // no manual subscriptions; use $effect
 
   let prevOverflow: string | null = null;
+  let _resizeHandler: (() => void) | undefined;
 
   // bounding boxes for star click detection
   const starBounds = new Map<string, { x: number; y: number; r: number }>();
 
   // when true, canvas will automatically keep the selected ship centered
-  let followShip = false;
-  let sidebarOpen = true;
+  let followShip = $state(false);
+  let sidebarOpen = $state(true);
 
   function toCanvas(x: number, y: number) {
     return { x: w / 2 + x + panX, y: h / 2 + y + panY };
@@ -363,91 +361,94 @@
     draw();
   }
 
-  let _resizeHandler: () => void;
+  
 
-  onMount(() => {
-    // hide page scrollbar while this fullscreen canvas is active
+  // Hide page scrollbar while fullscreen canvas is active
+  $effect(() => {
     if (typeof document !== 'undefined') {
       prevOverflow = document.documentElement.style.overflow || document.body.style.overflow || null;
       document.documentElement.style.overflow = 'hidden';
       document.body.style.overflow = 'hidden';
     }
-    // setup canvas size for crisp rendering on HiDPI screens
+    return () => {
+      if (typeof document !== 'undefined') {
+        if (prevOverflow !== null) {
+          document.documentElement.style.overflow = prevOverflow;
+          document.body.style.overflow = prevOverflow;
+        } else {
+          document.documentElement.style.overflow = '';
+          document.body.style.overflow = '';
+        }
+      }
+    };
+  });
+
+  // Setup canvas size for HiDPI and keep ctx in sync
+  $effect(() => {
+    if (!canvas) return;
     _resizeHandler = () => {
-      if (!canvas) return;
       // CSS size (logical pixels)
-      const cssW = canvas.clientWidth || w;
-      const cssH = canvas.clientHeight || h;
+      const cssW = canvas!.clientWidth || w;
+      const cssH = canvas!.clientHeight || h;
       w = cssW;
       h = cssH;
       dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
 
       // set actual pixel size
-      canvas.width = Math.max(1, Math.round(w * dpr));
-      canvas.height = Math.max(1, Math.round(h * dpr));
+      canvas!.width = Math.max(1, Math.round(w * dpr));
+      canvas!.height = Math.max(1, Math.round(h * dpr));
       // keep CSS size
-      canvas.style.width = `${w}px`;
-      canvas.style.height = `${h}px`;
+      canvas!.style.width = `${w}px`;
+      canvas!.style.height = `${h}px`;
 
-      ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+      ctx = canvas!.getContext('2d') as CanvasRenderingContext2D;
       // reset any existing transform and scale drawing operations to DPP
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
-
     _resizeHandler();
     window.addEventListener('resize', _resizeHandler);
+    return () => {
+      if (_resizeHandler) window.removeEventListener('resize', _resizeHandler);
+    };
+  });
 
-    unsubShips = ships.subscribe(() => draw());
-    unsubTime = simTime.subscribe(() => draw());
-    unsubSelected = selectedShipId.subscribe((id) => {
-      // when user selects a ship by clicking, start following it automatically
-      if (id) {
-        followShip = true;
-      } else {
-        // if deselected, stop following
-        followShip = false;
-      }
-      draw();
-    });
-  // redraw when selected star changes
-  unsubStar = selectedStarId.subscribe(() => draw());
-
-    // pointer events for pan
-    canvas.addEventListener('pointerdown', onPointerDown);
+  // Register event listeners for interactions
+  $effect(() => {
+    if (!canvas) return;
+    const c = canvas;
+    c.addEventListener('pointerdown', onPointerDown);
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
-    canvas.addEventListener('wheel', onWheel, { passive: false });
+    c.addEventListener('wheel', onWheel, { passive: false } as any);
+    c.addEventListener('click', handleClick);
+    draw();
+    return () => {
+      c.removeEventListener('click', handleClick);
+      c.removeEventListener('pointerdown', onPointerDown);
+      c.removeEventListener('wheel', onWheel as any);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+    };
+  });
 
-    // click detection
-    canvas.addEventListener('click', handleClick);
-
+  // Redraw on store changes
+  $effect(() => {
+    // touching these stores makes the effect depend on them
+    $ships; $simTime; $selectedStarId;
     draw();
   });
 
-  onDestroy(() => {
-    // canvas may be undefined during SSR; guard DOM calls
-    if (typeof window !== 'undefined') {
-      if (canvas && typeof canvas.removeEventListener === 'function') {
-        canvas.removeEventListener('click', handleClick);
-        canvas.removeEventListener('pointerdown', onPointerDown);
-        canvas.removeEventListener('wheel', onWheel);
+  // Follow selected ship when selection changes to a new non-null id
+  let prevSelectedId: string | null = $state(null);
+  $effect(() => {
+    const current = $selectedShipId as string | null;
+    if (current !== prevSelectedId) {
+      prevSelectedId = current;
+      if (current) {
+        // only auto-enable following when a new ship gets selected
+        followShip = true;
       }
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
-  if (_resizeHandler) window.removeEventListener('resize', _resizeHandler);
-    }
-    if (unsubShips) unsubShips();
-    if (unsubTime) unsubTime();
-    if (unsubSelected) unsubSelected();
-    // restore overflow
-    if (typeof document !== 'undefined') {
-      if (prevOverflow !== null) {
-        document.documentElement.style.overflow = prevOverflow;
-        document.body.style.overflow = prevOverflow;
-      } else {
-        document.documentElement.style.overflow = '';
-        document.body.style.overflow = '';
-      }
+      draw();
     }
   });
 </script>
@@ -484,7 +485,7 @@
     {/if}
 
     <!-- sidebar toggle -->
-    <button class="absolute left-4 top-4 z-60 w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center shadow" on:click={toggleSidebar} aria-label="Toggle sidebar">
+    <button class="absolute left-4 top-4 z-60 w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center shadow" onclick={toggleSidebar} aria-label="Toggle sidebar">
       <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
 
@@ -492,7 +493,7 @@
   <div class="absolute right-4 bottom-4 flex flex-col gap-2 items-end z-50">
       <button
         class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center shadow-lg"
-        on:click={centerEarth}
+        onclick={centerEarth}
         aria-label="Center on Earth"
         title="Center on Earth"
       >
@@ -508,7 +509,7 @@
       {#if followShip}
         <button
           class="w-10 h-10 rounded-full bg-red-600 hover:bg-red-500 flex items-center justify-center shadow-lg"
-          on:click={stopFollow}
+          onclick={stopFollow}
           aria-label="Stop following ship"
           title="Stop following ship"
         >

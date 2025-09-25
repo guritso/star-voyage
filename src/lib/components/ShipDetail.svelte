@@ -2,15 +2,31 @@
   import { selectedShipId, ships, simTime } from '$lib/stores';
   import { STARS, getStarById } from '$lib/stars';
   import { shipMetrics, properTimeFactor } from '$lib/relativity';
+  import type { ShipParams } from '$lib/relativity';
 
-  // Use Svelte auto-subscription for stores
-  $: ship = $selectedShipId ? $ships.find((s) => s.id === $selectedShipId) : null;
-  $: metrics = ship ? shipMetrics(ship, getStarById(ship.starId)?.distanceLy ?? 0, $simTime) : null;
+  // Use Svelte 5 runes ($derived.by) with explicit types
+  let ship: ShipParams | null = $derived.by<ShipParams | null>(() =>
+    $selectedShipId ? $ships.find((s) => s.id === $selectedShipId) ?? null : null
+  );
+
+  let metrics: ReturnType<typeof shipMetrics> | null = $derived.by<ReturnType<typeof shipMetrics> | null>(() =>
+    ship ? shipMetrics(ship, getStarById(ship.starId)?.distanceLy ?? 0, $simTime) : null
+  );
+
   // Clamp displayed elapsed times to arrival so they stop increasing after arrival
-  $: tauFactor = ship ? properTimeFactor(ship.speedFraction) : 1;
-  $: arrivalElapsedTerra = ship && metrics ? Math.max(0, (metrics.timeOfArrivalTerra - ship.startTime)) : 0;
-  $: displayTimeTerra = ship && metrics ? Math.min(metrics.timeTerraYears, arrivalElapsedTerra) : 0;
-  $: displayTimeShip = ship && metrics ? Math.min(metrics.timeShipYears, arrivalElapsedTerra * tauFactor) : 0;
+  let tauFactor: number = $derived.by<number>(() => (ship ? properTimeFactor(ship.speedFraction) : 1));
+
+  let arrivalElapsedTerra: number = $derived.by<number>(() =>
+    ship && metrics ? Math.max(0, metrics.timeOfArrivalTerra - ship.startTime) : 0
+  );
+
+  let displayTimeTerra: number = $derived.by<number>(() =>
+    ship && metrics ? Math.min(metrics.timeTerraYears, arrivalElapsedTerra) : 0
+  );
+
+  let displayTimeShip: number = $derived.by<number>(() =>
+    ship && metrics ? Math.min(metrics.timeShipYears, arrivalElapsedTerra * tauFactor) : 0
+  );
 
   function formatPercent(frac: number) {
     // show percentage with 3 significant digits
