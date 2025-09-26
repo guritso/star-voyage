@@ -1,6 +1,6 @@
 <script lang="ts">
   
-  import { STARS } from '$lib/stars';
+  import { starsList } from '$lib/stars';
   import { ships, selectedShipId, simTime, selectedStarId, targetStarId } from '$lib/stores';
   import { get } from 'svelte/store';
   import type { ShipParams } from '$lib/relativity';
@@ -30,6 +30,17 @@
   let panStartY = 0;
   let didDrag = false;
 
+  // schedule redraw to avoid nested effect loops
+  let drawScheduled = false;
+  function scheduleDraw() {
+    if (drawScheduled) return;
+    drawScheduled = true;
+    requestAnimationFrame(() => {
+      drawScheduled = false;
+      draw();
+    });
+  }
+
   // no manual subscriptions; use $effect
 
   let prevOverflow: string | null = null;
@@ -46,10 +57,26 @@
     return { x: w / 2 + x + panX, y: h / 2 + y + panY };
   }
 
-  function starPosition(distanceLy: number, index: number) {
-    // scatter stars around a circle for simplicity
-    const angle = (index / STARS.length) * Math.PI * 2;
-    const r = distanceLy * scale;
+  function hashToUnit(name: string): number {
+    let h = 2166136261 >>> 0; // FNV-1a
+    for (let i = 0; i < name.length; i++) {
+      h ^= name.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0) / 2 ** 32; // 0..1
+  }
+
+  function starPosition(star: { id: string; name: string; distanceLy: number; raHours?: number }, index: number, total: number) {
+    // Option B: angle from RA if available; else stable hash or index/total
+    let u = star.raHours != null && isFinite(star.raHours) ? (star.raHours % 24) / 24 : null;
+    if (u == null) {
+      // stable fallback using id/name
+      u = hashToUnit(star.id || star.name);
+    }
+    // tiny jitter based on index to reduce perfect overlaps
+    const jitter = (index % 7) * 0.0015; // ~0.1 degrees
+    const angle = (u + jitter) * Math.PI * 2;
+    const r = star.distanceLy * scale;
     return { x: Math.cos(angle) * r, y: Math.sin(angle) * r };
   }
 
@@ -59,25 +86,33 @@
     // background
     ctx.fillStyle = '#030314';
     ctx.fillRect(0, 0, w, h);
+    // current stars from selected source
+    const stars = get(starsList);
     // If we're following a ship, update pan so the ship remains centered
     if (followShip && $selectedShipId) {
       const shipList = get(ships);
       const ship = shipList.find((s: ShipParams) => s.id === $selectedShipId);
       if (ship) {
-        const star = STARS.find((s) => s.id === ship.starId);
+        const star = stars.find((s) => s.id === ship.starId);
         if (star) {
-          const spos = starPosition(star.distanceLy, STARS.indexOf(star));
+          const starIdx = stars.findIndex((st) => st.id === star.id);
+          const spos = starPosition(star, Math.max(0, starIdx), stars.length);
           const t = get(simTime);
-          const metrics = shipMetrics(ship, star.distanceLy, t);
-          const fraction = Math.min(1, metrics.distanceCoveredLy / star.distanceLy);
+          const metrics = shipMetrics(ship, ship.starDistanceLy ?? star.distanceLy, t);
+          const fraction = Math.min(1, metrics.distanceCoveredLy / (ship.starDistanceLy ?? star.distanceLy));
           const sx = 0 + (spos.x - 0) * fraction;
           const sy = 0 + (spos.y - 0) * fraction;
           // apply zoom same way draw does
           const sxz = sx * (scale / 60);
           const syz = sy * (scale / 60);
           // center ship by setting pan so that toCanvas(sxz, syz) => center
-          panX = -sxz;
-          panY = -syz;
+          const newPanX = -sxz;
+          const newPanY = -syz;
+          const EPS = 1e-3;
+          if (Math.abs(newPanX - panX) > EPS || Math.abs(newPanY - panY) > EPS) {
+            panX = newPanX;
+            panY = newPanY;
+          }
         } else {
           // star gone, stop following
           followShip = false;
@@ -98,9 +133,9 @@
   ctx.font = '12px sans-serif';
   ctx.fillText('Earth', earthPos.x + 8, earthPos.y + 4);
 
-    // draw stars
-    STARS.forEach((s, i) => {
-      const pos = starPosition(s.distanceLy, i);
+  // stars already fetched at the start of draw()
+    stars.forEach((s, i) => {
+      const pos = starPosition(s, i, stars.length);
       // apply zoom to positions
       const sposZoomed = { x: pos.x * (scale / 60), y: pos.y * (scale / 60) };
       const cpos = toCanvas(sposZoomed.x, sposZoomed.y);
@@ -139,7 +174,7 @@
     // First pass: collect ships that have arrived per star to determine stacking order
     const arrivedByStar = new Map<string, string[]>();
     shipList.forEach((ship: ShipParams) => {
-      const star = STARS.find((s) => s.id === ship.starId);
+      const star = (get(starsList)).find((s) => s.id === ship.starId);
       if (!star) return;
       const metrics = shipMetrics(ship, star.distanceLy, t);
       const arrived = metrics.distanceRemainingLy <= 1e-9 || metrics.distanceCoveredLy >= star.distanceLy;
@@ -152,12 +187,12 @@
 
     // Second pass: render ships (arrived get parked to the left of the star, smaller, stacked side-by-side)
     shipList.forEach((ship: ShipParams, idx) => {
-      const star = STARS.find((s) => s.id === ship.starId);
+      const star = stars.find((s) => s.id === ship.starId);
       if (!star) return;
-
-      const spos = starPosition(star.distanceLy, STARS.indexOf(star));
-      const metrics = shipMetrics(ship, star.distanceLy, t);
-      const fraction = Math.min(1, metrics.distanceCoveredLy / star.distanceLy);
+      const sidx = stars.findIndex((st) => st.id === star.id);
+      const spos = starPosition(star, Math.max(0, sidx), stars.length);
+      const metrics = shipMetrics(ship, ship.starDistanceLy ?? star.distanceLy, t);
+      const fraction = Math.min(1, metrics.distanceCoveredLy / (ship.starDistanceLy ?? star.distanceLy));
 
       // ship color
       const hue = (idx * 73) % 360;
@@ -273,7 +308,7 @@
     if (!didDrag && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) didDrag = true;
     panX = panStartX + dx;
     panY = panStartY + dy;
-    draw();
+    scheduleDraw();
   }
 
   function onPointerUp(e: PointerEvent) {
@@ -298,7 +333,7 @@
     // after changing scale, keep world point under cursor by adjusting pan
     panX = cx - w / 2 - worldX * (scale / 60);
     panY = cy - h / 2 - worldY * (scale / 60);
-    draw();
+    scheduleDraw();
     e.preventDefault();
   }
 
@@ -421,7 +456,7 @@
     window.addEventListener('pointerup', onPointerUp);
     c.addEventListener('wheel', onWheel, { passive: false } as any);
     c.addEventListener('click', handleClick);
-    draw();
+    scheduleDraw();
     return () => {
       c.removeEventListener('click', handleClick);
       c.removeEventListener('pointerdown', onPointerDown);
@@ -431,11 +466,11 @@
     };
   });
 
-  // Redraw on store changes
+  // Redraw on store changes (debounced via rAF)
   $effect(() => {
     // touching these stores makes the effect depend on them
-    $ships; $simTime; $selectedStarId;
-    draw();
+    $ships; $simTime; $selectedStarId; $starsList;
+    scheduleDraw();
   });
 
   // Follow selected ship when selection changes to a new non-null id
@@ -448,7 +483,7 @@
         // only auto-enable following when a new ship gets selected
         followShip = true;
       }
-      draw();
+      scheduleDraw();
     }
   });
 </script>

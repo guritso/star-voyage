@@ -11,6 +11,9 @@
     <h3 class="font-semibold text-white">{star.name}</h3>
     <div class="mt-2 space-y-1">
       <div>Distance: {star.distanceLy} ly</div>
+      {#if star.constellation}
+        <div>Constellation: {star.constellation}</div>
+      {/if}
       {#if star.description}
         <div class="text-xs text-gray-400">{star.description}</div>
       {/if}

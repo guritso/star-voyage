@@ -5,6 +5,8 @@ export type ShipParams = {
   id: string;
   name: string;
   starId: string;
+  // snapshot of destination distance at creation time to keep physics stable
+  starDistanceLy: number;
   speedFraction: number; // fraction of c, e.g., 0.5 = 50% c
   startTime: number; // simulation time when launched (years)
 };

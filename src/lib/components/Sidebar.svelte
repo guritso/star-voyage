@@ -1,20 +1,46 @@
 <script lang="ts">
-  import { STARS } from '$lib/stars';
+  import { starsList, starsSource, resetApiStars, loadNextApiPage, apiOffset, apiMaxDistanceLy, apiLoading } from '$lib/stars';
   import { ships, selectedShipId, targetStarId } from '$lib/stores';
   import { get } from 'svelte/store';
   import type { ShipParams } from '$lib/relativity';
 
   let name = $state('');
-  // initialize select to store-backed target so clicks on canvas can prefill
-  let starId = $state(STARS[0].id);
+  // selected star id for new ships
+  let starId = $state<string>('');
+  // ensure starId is valid when starsList changes
+  $effect(() => {
+    const list = $starsList as Array<{ id: string }>;
+    if (!list || list.length === 0) return;
+    if (!starId || !list.some((s) => s.id === starId)) {
+      starId = list[0].id;
+    }
+  });
 
-  // keep local starId in sync with the global targetStarId
+  // keep local starId in sync with the global targetStarId, but only if it exists in the current list
   $effect(() => {
     if ($targetStarId && $targetStarId !== starId) {
-      starId = $targetStarId;
+      const list = $starsList as Array<{ id: string }>;
+      if (list && list.some((s) => s.id === $targetStarId)) {
+        starId = $targetStarId;
+      }
     }
   });
   let speed = $state(0.5); // fraction of c
+
+  // UI helpers for API loading
+  function useBasic() {
+    starsSource.set('basic');
+  }
+  function useApi() {
+    starsSource.set('api');
+  }
+  async function reloadApi() {
+    await resetApiStars();
+    await loadNextApiPage();
+  }
+  async function loadMoreApi() {
+    await loadNextApiPage();
+  }
 
   function addShip() {
     if (!starId) return;
@@ -23,10 +49,13 @@
       return;
     }
     const id = `ship-${Date.now()}`;
+    const list = $starsList as Array<{ id: string; distanceLy: number }>;
+    const dest = list.find((s) => s.id === starId);
     const ship: ShipParams = {
       id,
       name: name || `Ship ${get(ships).length + 1}`,
       starId,
+      starDistanceLy: dest ? dest.distanceLy : 0,
       speedFraction: speed,
       startTime: getTime()
     };
@@ -49,8 +78,24 @@
           <!-- form on the left -->
           <div class="flex-1 flex flex-col gap-2">
             <input placeholder="Name (optional)" bind:value={name} class="p-2 rounded bg-gray-800 text-white" />
+            <!-- source selector -->
+            <div class="flex items-center gap-2 text-sm text-gray-300">
+              <span>Stars:</span>
+              <button class="px-2 py-1 rounded bg-gray-800 hover:bg-gray-700" class:font-semibold={$starsSource==='basic'} onclick={useBasic}>Basic</button>
+              <button class="px-2 py-1 rounded bg-gray-800 hover:bg-gray-700" class:font-semibold={$starsSource==='api'} onclick={useApi}>API</button>
+            </div>
+            <!-- API controls (stable DOM to prevent ghosting) -->
+            {#if $starsSource === 'api'}
+              <div class="relative api-controls flex items-center gap-2 text-sm text-gray-300" style="min-width: 320px;">
+                <label for="max-dist">max ly</label>
+                <input id="max-dist" type="number" min="1" max="10000" step="1" bind:value={$apiMaxDistanceLy} class="w-24 p-1 rounded bg-gray-800 text-white" />
+                <button class="px-2 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-60" class:animate-pulse={$apiLoading} onclick={reloadApi} disabled={$apiLoading}>Reload</button>
+                <button class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-white disabled:opacity-60" onclick={loadMoreApi} disabled={$apiLoading}>+30</button>
+                <span class="text-xs text-gray-400">offset {$apiOffset}</span>
+              </div>
+            {/if}
             <select bind:value={starId} class="p-2 rounded bg-gray-800 text-white">
-              {#each STARS as s}
+              {#each $starsList as s}
                 <option value={s.id}>{s.name} — {s.distanceLy} ly</option>
               {/each}
             </select>

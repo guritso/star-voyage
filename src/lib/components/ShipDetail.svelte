@@ -10,7 +10,7 @@
   );
 
   let metrics: ReturnType<typeof shipMetrics> | null = $derived.by<ReturnType<typeof shipMetrics> | null>(() =>
-    ship ? shipMetrics(ship, getStarById(ship.starId)?.distanceLy ?? 0, $simTime) : null
+    ship ? shipMetrics(ship, ship.starDistanceLy ?? (getStarById(ship.starId)?.distanceLy ?? 0), $simTime) : null
   );
 
   // Clamp displayed elapsed times to arrival so they stop increasing after arrival
@@ -27,6 +27,16 @@
   let displayTimeShip: number = $derived.by<number>(() =>
     ship && metrics ? Math.min(metrics.timeShipYears, arrivalElapsedTerra * tauFactor) : 0
   );
+
+  // Total travel time at Earth frame (distance / v)
+  let totalTravelTerra: number = $derived.by<number>(() =>
+    ship ? (ship.speedFraction > 0 ? (ship.starDistanceLy ?? (getStarById(ship.starId)?.distanceLy ?? 0)) / ship.speedFraction : Infinity) : 0
+  );
+  // Count-up style: arrival progress (elapsed toward arrival)
+  let arrivalElapsedProgress: number = $derived.by<number>(() => (metrics ? Math.min(metrics.timeTerraYears, totalTravelTerra) : 0));
+  // Count-up style: confirmation progress (elapsed toward confirmation)
+  let totalConfirmTerra: number = $derived.by<number>(() => (ship ? totalTravelTerra + (ship.starDistanceLy ?? (getStarById(ship.starId)?.distanceLy ?? 0)) : 0));
+  let confirmElapsedTerra: number = $derived.by<number>(() => (metrics ? Math.min(metrics.timeTerraYears, totalConfirmTerra) : 0));
 
   function formatPercent(frac: number) {
     // show percentage with 3 significant digits
@@ -68,8 +78,8 @@
         <div>Distance covered: {formatLy(metrics.distanceCoveredLy)}</div>
         <div>Distance remaining: {formatLy(metrics.distanceRemainingLy)}</div>
         <div>Lorentz γ: {formatGamma(metrics.lorentz)}</div>
-        <div>Arrival (Earth time): {formatYears(metrics.timeOfArrivalTerra)}</div>
-        <div>Confirmation time: {formatYears(metrics.timeOfConfirmationTerra)}</div>
+        <div>Arrival progress (Earth): {formatYears(arrivalElapsedProgress)} / {formatYears(totalTravelTerra)}</div>
+        <div>Confirmation progress: {formatYears(confirmElapsedTerra)} / {formatYears(totalConfirmTerra)}</div>
       {/if}
     </div>
   </div>
