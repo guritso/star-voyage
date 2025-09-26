@@ -16,13 +16,25 @@
     }
   });
 
-  // keep local starId in sync with the global targetStarId, but only if it exists in the current list
+  // keep local starId in sync with targetStarId ONLY when targetStarId changes
+  let prevTargetId: string | null = $state(null);
   $effect(() => {
-    if ($targetStarId && $targetStarId !== starId) {
-      const list = $starsList as Array<{ id: string }>;
-      if (list && list.some((s) => s.id === $targetStarId)) {
-        starId = $targetStarId;
+    const t = $targetStarId;
+    if (t !== prevTargetId) {
+      prevTargetId = t;
+      if (t) {
+        const list = $starsList as Array<{ id: string }>;
+        if (list && list.some((s) => s.id === t)) {
+          starId = t;
+        }
       }
+    }
+  });
+
+  // when user changes the dropdown, propagate selection to targetStarId (without loops)
+  $effect(() => {
+    if (starId && $targetStarId !== starId) {
+      targetStarId.set(starId);
     }
   });
   let speed = $state(0.5); // fraction of c
@@ -94,11 +106,13 @@
                 <span class="text-xs text-gray-400">offset {$apiOffset}</span>
               </div>
             {/if}
-            <select bind:value={starId} class="p-2 rounded bg-gray-800 text-white">
+            <div>
+            <select bind:value={starId} class="w-full p-2 rounded bg-gray-800 text-white">
               {#each $starsList as s}
                 <option value={s.id}>{s.name} — {s.distanceLy} ly</option>
               {/each}
             </select>
+            </div>
             <div>
               <label for="ship-speed" class="text-sm text-gray-300">Speed (fraction of c)</label>
               <input id="ship-speed" type="number" min="0.001" max="0.99999" step="0.001" bind:value={speed} class="w-full p-2 rounded bg-gray-800 text-white" />

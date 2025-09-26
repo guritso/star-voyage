@@ -29,7 +29,10 @@ export const STARS: Star[] = [
 // Source selection: 'basic' uses STARS; 'api' uses apiStars
 export const starsSource = writable<'basic' | 'api'>('basic');
 export const apiStars = writable<Star[]>([]);
-export const starsList = derived([starsSource, apiStars], ([$src, $api]) => ($src === 'basic' ? STARS : $api));
+export const starsList = derived([starsSource, apiStars], ([$src, $api]) => {
+  const list = $src === 'basic' ? STARS : $api;
+  return [...list].sort((a, b) => a.distanceLy - b.distanceLy);
+});
 
 // API pagination state
 export const apiOffset = writable(0);

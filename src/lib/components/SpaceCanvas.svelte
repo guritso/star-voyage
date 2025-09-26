@@ -1,7 +1,7 @@
 <script lang="ts">
   
   import { starsList } from '$lib/stars';
-  import { ships, selectedShipId, simTime, selectedStarId, targetStarId } from '$lib/stores';
+  import { ships, selectedShipId, simTime, selectedStarId, targetStarId, zoomToStarId } from '$lib/stores';
   import { get } from 'svelte/store';
   import type { ShipParams } from '$lib/relativity';
   import { shipMetrics } from '$lib/relativity';
@@ -32,6 +32,8 @@
 
   // schedule redraw to avoid nested effect loops
   let drawScheduled = false;
+  // transient guard to avoid auto-follow recentering during a manual zoom frame
+  let suppressFollow = false;
   function scheduleDraw() {
     if (drawScheduled) return;
     drawScheduled = true;
@@ -76,7 +78,8 @@
     // tiny jitter based on index to reduce perfect overlaps
     const jitter = (index % 7) * 0.0015; // ~0.1 degrees
     const angle = (u + jitter) * Math.PI * 2;
-    const r = star.distanceLy * scale;
+    // return in world units (light-years); scale applied later in draw
+    const r = star.distanceLy;
     return { x: Math.cos(angle) * r, y: Math.sin(angle) * r };
   }
 
@@ -89,7 +92,7 @@
     // current stars from selected source
     const stars = get(starsList);
     // If we're following a ship, update pan so the ship remains centered
-    if (followShip && $selectedShipId) {
+    if (followShip && !suppressFollow && $selectedShipId) {
       const shipList = get(ships);
       const ship = shipList.find((s: ShipParams) => s.id === $selectedShipId);
       if (ship) {
@@ -292,6 +295,8 @@
   // --- Pan & zoom handlers ---
   function onPointerDown(e: PointerEvent) {
     if (e.button !== 0) return; // only left button
+    // User is taking manual control; disable auto-follow
+    followShip = false;
     isDragging = true;
     didDrag = false;
     dragStartX = e.clientX;
@@ -318,6 +323,9 @@
 
   function onWheel(e: WheelEvent) {
     // zoom centered on cursor
+    // Manual zoom should cancel auto-follow to honor cursor anchor
+    followShip = false;
+    suppressFollow = true;
     const delta = -e.deltaY;
     const zoomFactor = delta > 0 ? 1.08 : 0.92;
     const rect = canvas.getBoundingClientRect();
@@ -328,12 +336,14 @@
     const worldX = (cx - w / 2 - panX) / (scale / 60);
     const worldY = (cy - h / 2 - panY) / (scale / 60);
 
-    scale = Math.min(800, Math.max(10, scale * zoomFactor));
+    scale = Math.min(10000, Math.max(10, scale * zoomFactor));
 
     // after changing scale, keep world point under cursor by adjusting pan
     panX = cx - w / 2 - worldX * (scale / 60);
     panY = cy - h / 2 - worldY * (scale / 60);
     scheduleDraw();
+    // release suppression next frame so subsequent renders may re-center if user re-enables follow
+    requestAnimationFrame(() => { suppressFollow = false; });
     e.preventDefault();
   }
 
@@ -471,6 +481,63 @@
     // touching these stores makes the effect depend on them
     $ships; $simTime; $selectedStarId; $starsList;
     scheduleDraw();
+  });
+
+  // Smooth pan+zoom animation helper
+  function animateToWorld(xLy: number, yLy: number, desiredScale: number, durationMs = 350) {
+    followShip = false;
+    suppressFollow = true;
+    const startScale = scale;
+    const startPanX = panX;
+    const startPanY = panY;
+    const targetScale = Math.min(10000, Math.max(10, desiredScale));
+    const targetPx = xLy * (targetScale / 60);
+    const targetPy = yLy * (targetScale / 60);
+    const targetPanX = -targetPx;
+    const targetPanY = -targetPy;
+    const t0 = performance.now();
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3); // easeOutCubic
+    function step(now: number) {
+      const p = Math.min(1, (now - t0) / durationMs);
+      const e = ease(p);
+      scale = startScale + (targetScale - startScale) * e;
+      panX = startPanX + (targetPanX - startPanX) * e;
+      panY = startPanY + (targetPanY - startPanY) * e;
+      scheduleDraw();
+      if (p < 1) requestAnimationFrame(step);
+      else requestAnimationFrame(() => { suppressFollow = false; });
+    }
+    requestAnimationFrame(step);
+  }
+
+  // Auto-zoom when a zoom request is issued
+  $effect(() => {
+    const req = $zoomToStarId;
+    if (!req) return;
+    const stars = get(starsList);
+    const s = stars.find((x) => x.id === req);
+    if (s) {
+      const idx = stars.findIndex((x) => x.id === s.id);
+      const pos = starPosition(s, Math.max(0, idx), stars.length);
+      const desired = Math.max(scale, 600);
+      animateToWorld(pos.x, pos.y, desired);
+    }
+    zoomToStarId.set(null);
+  });
+
+  // Auto-zoom when the target star changes (e.g., user selects in Sidebar or clicks a star)
+  let prevTargetForZoom: string | null = $state(null);
+  $effect(() => {
+    const tid = $targetStarId;
+    if (!tid || tid === prevTargetForZoom) return;
+    prevTargetForZoom = tid;
+    const stars = get(starsList);
+    const s = stars.find((x) => x.id === tid);
+    if (!s) return;
+    const idx = stars.findIndex((x) => x.id === s.id);
+    const pos = starPosition(s, Math.max(0, idx), stars.length);
+    const desired = Math.max(scale, 600);
+    animateToWorld(pos.x, pos.y, desired);
   });
 
   // Follow selected ship when selection changes to a new non-null id
