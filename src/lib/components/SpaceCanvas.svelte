@@ -349,9 +349,7 @@
 
   function centerEarth() {
     // reset pan so earth (scene origin) is centered in canvas
-    panX = 0;
-    panY = 0;
-    draw();
+    animateToWorld(0, 0, 1000);
   }
 
   function stopFollow() {

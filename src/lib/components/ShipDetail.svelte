@@ -1,6 +1,6 @@
 <script lang="ts">
   import { selectedShipId, ships, simTime } from '$lib/stores';
-  import { STARS, getStarById } from '$lib/stars';
+  import { getStarById } from '$lib/stars';
   import { shipMetrics, properTimeFactor } from '$lib/relativity';
   import type { ShipParams } from '$lib/relativity';
 
@@ -46,9 +46,9 @@
 
   function formatYears(y: number) {
     if (!isFinite(y)) return '—';
-    if (y < 1000) return `${y.toFixed(3)} yr`;
-    if (y < 1_000_000) return `${(y / 1000).toFixed(3)} kyr`;
-    return `${(y / 1_000_000).toFixed(3)} Myr`;
+    if (y < 1000) return `${y.toFixed(2)} yr`;
+    if (y < 1_000_000) return `${(y / 1000).toFixed(2)} kyr`;
+    return `${(y / 1_000_000).toFixed(2)} Myr`;
   }
 
   function yearsToDays(y: number) {

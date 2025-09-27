@@ -1,24 +1,13 @@
 import type { Star } from '$lib/stars';
-import { env } from '$env/dynamic/public';
 
-export type NinjaStar = {
+export type LocalStar = {
   name: string;
   constellation?: string;
+  distance_light_year: number;
   right_ascension?: string;
   declination?: string;
   apparent_magnitude?: string;
-  absolute_magnitude?: string;
-  distance_light_year?: string;
-  spectral_class?: string;
 };
-
-function parseDistance(distance: string | undefined): number | null {
-  if (!distance) return null;
-  // remove commas and whitespace
-  const clean = distance.replace(/[,\s]/g, '');
-  const num = Number(clean);
-  return Number.isFinite(num) ? num : null;
-}
 
 function parseRAtoHours(ra: string | undefined): number | null {
   if (!ra) return null;
@@ -37,8 +26,8 @@ function parseDecToDegrees(dec: string | undefined): number | null {
   if (!dec) return null;
   // Normalize unicode primes to plain characters and remove spaces
   const norm = dec
-    .replace(/[′’‛᾽`]/g, "'")
-    .replace(/[″“”]/g, '"')
+    .replace(/[′'‛᾽`]/g, "'")
+    .replace(/[″""]/g, '"')
     .replace(/\s+/g, ' ')
     .trim();
   // Formats like "+44° 01′ 22″" or "-22 30 00"
@@ -61,45 +50,70 @@ function slugify(input: string): string {
     .slice(0, 40);
 }
 
-export async function fetchNinjaStars(
-  params: { maxDistanceLy?: number; offset?: number; maxApparentMag?: number },
-  fetchFn: typeof fetch = fetch
-): Promise<Star[]> {
-  const { maxDistanceLy = 100, offset = 0, maxApparentMag } = params;
-  const apiKey = env.PUBLIC_API_NINJAS_KEY;
-  if (!apiKey) {
-    console.warn('API Ninjas key missing. Set PUBLIC_API_NINJAS_KEY in your env. Falling back to empty list.');
-    return [];
-  }
-  const url = new URL('https://api.api-ninjas.com/v1/stars');
-  url.searchParams.set('max_distance_light_year', String(maxDistanceLy));
-  url.searchParams.set('offset', String(offset));
-  if (typeof maxApparentMag === 'number') {
-    url.searchParams.set('max_apparent_magnitude', String(maxApparentMag));
+// Cache for local data
+let localStarsCache: LocalStar[] | null = null;
+
+async function loadLocalStars(): Promise<LocalStar[]> {
+  if (localStarsCache) {
+    return localStarsCache;
   }
 
-  const res = await fetchFn(url.toString(), {
-    headers: {
-      'X-Api-Key': apiKey
+  try {
+    const response = await fetch('/data/all-stars.ndjson');
+    if (!response.ok) {
+      throw new Error(`Failed to load local stars: ${response.status}`);
     }
-  });
-  if (!res.ok) {
-    console.error('API Ninjas request failed', res.status, await res.text());
+    
+    const text = await response.text();
+    const lines = text.trim().split('\n');
+    const stars: LocalStar[] = lines.map(line => JSON.parse(line));
+    
+    localStarsCache = stars;
+    return stars;
+  } catch (error) {
+    console.error('Error loading local stars:', error);
     return [];
   }
-  const data: NinjaStar[] = await res.json();
-  const mapped: Star[] = [];
-  for (let i = 0; i < data.length; i++) {
-    const item = data[i];
-    const dist = parseDistance(item.distance_light_year);
-    if (dist == null || !Number.isFinite(dist)) continue;
+}
+
+export async function fetchLocalStars(): Promise<Star[]> {
+  
+  const localStars = await loadLocalStars();
+  if (localStars.length === 0) {
+    console.warn('No local stars data available');
+    return [];
+  }
+
+  // Filter stars with distance > 0 and magnitude if specified
+  let filteredStars = localStars.filter(star => {
+    // Always filter stars with distance 0 or invalid
+    if (star.distance_light_year <= 0 || !Number.isFinite(star.distance_light_year)) {
+      return false;
+    }
+    
+    return true;
+  });
+
+  // Sort by distance (nearest first)
+  filteredStars.sort((a, b) => a.distance_light_year - b.distance_light_year);
+
+  // Convert to Star format
+  const mapped: Star[] = filteredStars.map((item, index) => {
     const raHours = parseRAtoHours(item.right_ascension ?? undefined) ?? undefined;
     const decDeg = parseDecToDegrees(item.declination ?? undefined) ?? undefined;
-    // respect max distance (API should filter, but double-check)
-    if (dist > maxDistanceLy) continue;
-    const baseId = slugify(item.name || `star-${offset + i}`);
-    const id = `api-${baseId}-${offset + i}`;
-    mapped.push({ id, name: item.name || `Star ${offset + i}`, distanceLy: dist, raHours, decDeg, constellation: item.constellation ?? undefined });
-  }
+    
+    const baseId = slugify(item.name || `star-${index}`);
+    const id = `local-${baseId}-${index}`;
+    
+    return {
+      id,
+      name: item.name || `Star ${index}`,
+      distanceLy: item.distance_light_year,
+      raHours,
+      decDeg,
+      constellation: item.constellation ?? undefined
+    };
+  });
+  
   return mapped;
 }

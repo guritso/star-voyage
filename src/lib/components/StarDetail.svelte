@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Star } from '$lib/stars';
   import { selectedStarId } from '$lib/stores';
-  import { STARS, getStarById } from '$lib/stars';
+  import { getStarById } from '$lib/stars';
   // runes-based derived with explicit typing
   let star: Star | null = $derived.by<Star | null>(() => ($selectedStarId ? getStarById($selectedStarId) ?? null : null));
 </script>
