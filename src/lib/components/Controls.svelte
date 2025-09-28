@@ -1,6 +1,6 @@
 <script lang="ts">
   import { simTime, simSpeed } from '$lib/stores';
-  import { RotateCcw } from "lucide-svelte";
+  import { RotateCcw, Play, Pause, SkipForward, SkipBack, FastForward, Rewind} from "lucide-svelte";
 
   let playing = $state(false);
   let rafId: number | null = null;
@@ -58,49 +58,32 @@
       <RotateCcw size="18" color="white"/>
     </button>
     <button aria-label="Decelerate" title="Decelerate" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded" onclick={() => { speedVal = Math.max(0.01, speedVal / 2); }}>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="text-white">
-        <polygon points="15,6 7,12 15,18" />
-        <polygon points="21,6 13,12 21,18" class="opacity-70" />
-      </svg>
+      <Rewind size="18" color="white"/>
     </button>
     <button aria-label="Step Back" title="Step Back 1y" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded" onclick={stepBackward}>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="text-white">
-        <polygon points="16,6 8,12 16,18" />
-        <rect x="18" y="6" width="2" height="12" />
-      </svg>
+      <SkipBack size="18" color="white"/>
     </button>
     <button aria-label="Play/Pause" title="Play/Pause" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded" onclick={togglePlay}>
       {#if playing}
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="text-white">
-          <rect x="6" y="5" width="3" height="14" />
-          <rect x="15" y="5" width="3" height="14" />
-        </svg>
+        <Pause size="18" color="white"/>
       {:else}
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="text-white">
-          <polygon points="6,4 20,12 6,20" />
-        </svg>
+        <Play size="18" color="white"/>
       {/if}
     </button>
     <button aria-label="Step Forward" title="Step Forward 1y" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded" onclick={stepForward}>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="text-white">
-        <polygon points="8,6 16,12 8,18" />
-        <rect x="4" y="6" width="2" height="12" />
-      </svg>
+      <SkipForward size="18" color="white"/>
     </button>
     <button aria-label="Accelerate" title="Accelerate" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded" onclick={() => { speedVal = Math.min(1000, speedVal * 2); }}>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="text-white">
-        <polygon points="9,6 17,12 9,18" />
-        <polygon points="3,6 11,12 3,18" class="opacity-70" />
-      </svg>
+      <FastForward size="18" color="white"/>
     </button>
   </div>
   <div class="ml-4 flex items-center gap-4">
-    <div class="flex flex-col text-right">
-      <div class="text-sm text-gray-300">Sim time</div>
+    <div class="flex items-center gap-2 text-right bg-gray-800 p-2 rounded">
+      <div class="text-sm text-gray-300">Sim time:</div>
       <div class="text-white text-sm">{$simTime.toFixed(3)} yr</div>
     </div>
 
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 bg-gray-800 p-2 rounded">
       <label for="sim-speed" class="text-sm text-gray-300">Sim speed (years/sec)</label>
       <div class="flex items-center gap-2">
         <input id="sim-speed" type="range" min="0.01" max="1000" step="0.01" bind:value={speedVal} class="mx-2" />
