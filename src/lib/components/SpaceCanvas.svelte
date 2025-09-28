@@ -569,7 +569,7 @@
     </div>
 
     <!-- unified detail panel: ship -> star -> placeholder -->
-    <div class="absolute right-4 top-4 z-50 w-72">
+    <div class="absolute right-4 top-20 z-50 w-72">
       {#if $selectedShipId}
         <ShipDetail />
       {:else if $selectedStarId}
@@ -581,7 +581,7 @@
 
     <!-- sidebar: floating panel on the left (scrollbar visually hidden) -->
     {#if sidebarOpen}
-      <div class="absolute left-4 top-20 bottom-4 z-50 w-96 hide-scrollbar pr-3" style="overflow-y:auto; overflow-x:hidden; scrollbar-width:none; -ms-overflow-style:none;">
+      <div class="absolute left-4 top-20 bottom-4 z-50 w-80 hide-scrollbar pr-3" style="overflow-y:auto; overflow-x:hidden; scrollbar-width:none; -ms-overflow-style:none;">
         <div class="h-full">
           <Sidebar />
         </div>
@@ -589,7 +589,7 @@
     {/if}
 
     <!-- sidebar toggle -->
-    <button class="absolute left-4 top-4 z-60 w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center shadow" onclick={toggleSidebar} aria-label="Toggle sidebar">
+    <button class="absolute left-4 top-4 z-60 w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center shadow cursor-pointer hover:bg-gray-700" onclick={toggleSidebar} aria-label="Toggle sidebar">
       <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
 

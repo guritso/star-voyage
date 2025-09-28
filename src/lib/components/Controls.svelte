@@ -95,7 +95,7 @@
       <div class="flex items-center gap-2">
         <input id="sim-speed" type="range" min="0.01" max="1000" step="0.01" bind:value={speedVal} class="mx-2" />
       </div>
-      <div class="text-sm text-gray-300">{speedVal.toFixed(2)} y/s</div>
+      <div class="text-gray-400">{speedVal.toFixed(2)} y/s</div>
     </div>
 
     <div class="flex items-center gap-2">
@@ -109,3 +109,18 @@
     </div>
   </div>
 </div>
+
+<style>
+  button {
+    cursor: pointer;
+  }
+
+  button:hover {
+    opacity: 0.9;
+  }
+
+  button:active {
+    opacity: 0.8;
+  }
+</style>
+  

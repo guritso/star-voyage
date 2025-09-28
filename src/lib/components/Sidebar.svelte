@@ -73,7 +73,7 @@
   let getTime = () => get(simTime);
 </script>
 
-<div class="p-4 space-y-4">
+<div class="space-y-4">
       <div class="bg-gray-900 p-3 rounded">
         <h3 class="text-white font-semibold">Add Ship</h3>
         <div class="mt-2 flex gap-3">
@@ -86,7 +86,7 @@
               <span>Stars:</span>
             </div>
             <div>
-            <select bind:value={starId} id="ship-star" size="1" class="custom-scrollbar w-full p-2 rounded bg-gray-800 text-white">
+            <select bind:value={starId} id="ship-star" size="1" class="custom-scrollbar w-full p-2 rounded bg-gray-800 text-white cursor-pointer">
               {#each $starsList as s}
                 <option value={s.id}>{s.name} — {s.distanceLy} ly</option>
               {/each}
@@ -136,4 +136,17 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
 }
+
+button {
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+button:active {
+  opacity: 0.8;
+}
 </style>
+
