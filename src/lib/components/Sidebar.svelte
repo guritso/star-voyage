@@ -1,18 +1,22 @@
 <script lang="ts">
-  import { starsList, loadAllStars } from '$lib/stars';
-  import { ships, selectedShipId, targetStarId } from '$lib/stores';
-  import { get } from 'svelte/store';
-  import type { ShipParams } from '$lib/relativity';
+  import { starsList } from "$lib/stars";
+  import { ships, selectedShipId, targetStarId } from "$lib/stores";
+  import { get } from "svelte/store";
+  import type { ShipParams } from "$lib/relativity";
 
-  let name = $state('');
+  let name = $state("");
   // selected star id for new ships
-  let starId = $state<string>('');
+  let starId = $state<string>("");
   // ensure starId is valid when starsList changes
   $effect(() => {
     const list = $starsList as Array<{ id: string }>;
     if (!list || list.length === 0) return;
     if (!starId || !list.some((s) => s.id === starId)) {
-      starId = list[0].id;
+      if (starId && list.length > 0) {
+        starId = list[0].id;
+      } else {
+        starId = "";
+      }
     }
   });
 
@@ -39,15 +43,10 @@
   });
   let speed = $state(0.5); // fraction of c
 
-  // Load local stars on component mount
-  $effect(() => {
-    loadAllStars();
-  });
-
   function addShip() {
     if (!starId) return;
     if (speed <= 0 || speed >= 1) {
-      alert('Speed must be between 0 and 1 (fraction of c, <1)');
+      alert("Speed must be between 0 and 1 (fraction of c, <1)");
       return;
     }
     const id = `ship-${Date.now()}`;
@@ -59,59 +58,91 @@
       starId,
       starDistanceLy: dest ? dest.distanceLy : 0,
       speedFraction: speed,
-      startTime: getTime()
+      startTime: getTime(),
     };
     ships.update((s) => [...s, ship]);
-    name = '';
+    name = "";
   }
 
   function removeShip(id: string) {
     ships.update((s) => s.filter((x) => x.id !== id));
     selectedShipId.set(null);
   }
-  import { simTime } from '$lib/stores';
+  import { simTime } from "$lib/stores";
   let getTime = () => get(simTime);
 </script>
 
 <div class="space-y-4">
-      <div class="bg-gray-900 p-3 rounded">
-        <h3 class="text-white font-semibold">Add Ship</h3>
-        <div class="mt-2 flex gap-3">
-          <!-- form on the left -->
-          <div class="flex-1 flex flex-col gap-2">
-            <input placeholder="Name (optional)" id="ship-name" bind:value={name} class="p-2 rounded bg-gray-800 text-white" />
-            <!-- source selector -->
-            <!-- Local stars controls -->
-            <div class="flex items-center gap-2 text-sm text-gray-300">
-              <span>Stars:</span>
-            </div>
-            <div>
-            <select bind:value={starId} id="ship-star" size="1" class="custom-scrollbar w-full p-2 rounded bg-gray-800 text-white cursor-pointer">
-              {#each $starsList as s}
-                <option value={s.id}>{s.name} — {s.distanceLy} ly</option>
-              {/each}
-            </select>
-            </div>
-            <div>
-              <label for="ship-speed" class="text-sm text-gray-300">Speed (fraction of c)</label>
-              <input id="ship-speed" type="number" min="0.001" max="0.99999" step="0.001" bind:value={speed} class="w-full p-2 rounded bg-gray-800 text-white" />
-            </div>
-            <button class="mt-2 w-full bg-blue-600 text-white p-2 rounded" onclick={addShip}>Add Ship</button>
-
-            <!-- star detail intentionally omitted here to avoid duplication; rendered in top-right area -->
-          </div>
+  <div class="bg-gray-900 p-3 rounded">
+    <h3 class="text-white font-semibold">Add Ship</h3>
+    <div class="mt-2 flex gap-3">
+      <!-- form on the left -->
+      <div class="flex-1 flex flex-col gap-2">
+        <input
+          placeholder="Name (optional)"
+          id="ship-name"
+          bind:value={name}
+          class="p-2 rounded bg-gray-800 text-white"
+        />
+        <!-- source selector -->
+        <!-- Local stars controls -->
+        <div class="flex items-center gap-2 text-sm text-gray-300">
+          <span>Stars:</span>
         </div>
+        <div>
+          <select
+            bind:value={starId}
+            id="ship-star"
+            class="custom-scrollbar md:w-full p-2 rounded bg-gray-800 text-white cursor-pointer"
+          >
+            {#each $starsList as s}
+              <option value={s.id}>{s.name} — {s.distanceLy} ly</option>
+            {/each}
+          </select>
+        </div>
+        <div>
+          <label for="ship-speed" class="text-sm text-gray-300"
+            >Speed (fraction of c)</label
+          >
+          <input
+            id="ship-speed"
+            type="number"
+            min="0.001"
+            max="0.99999"
+            step="0.001"
+            bind:value={speed}
+            class="w-full p-2 rounded bg-gray-800 text-white"
+          />
+        </div>
+        <button
+          class="mt-2 w-full bg-blue-600 text-white p-2 rounded"
+          onclick={addShip}>Add Ship</button
+        >
+
+        <!-- star detail intentionally omitted here to avoid duplication; rendered in top-right area -->
       </div>
+    </div>
+  </div>
 
   <div class="bg-gray-900 p-3 rounded">
     <h3 class="text-white font-semibold">Active Ships</h3>
     <ul class="mt-2 space-y-2">
       {#each $ships as s}
-        <li class="flex items-center justify-between bg-gray-800 p-2 rounded h-15">
-          <div class="text-xs text-gray-400">to {s.starId} @ {Math.round(s.speedFraction * 1000) / 10}% c</div>
+        <li
+          class="flex items-center justify-between bg-gray-800 p-2 rounded h-15"
+        >
+          <div class="text-xs text-gray-400">
+            to {s.starId} @ {Math.round(s.speedFraction * 1000) / 10}% c
+          </div>
           <div class="flex gap-2">
-            <button class="text-sm px-2 bg-blue-600 hover:bg-blue-500 rounded text-white cursor-pointer" onclick={() => selectedShipId.set(s.id)}>Focus</button>
-            <button class="text-sm px-2 bg-red-600 rounded text-white cursor-pointer h-6" onclick={() => removeShip(s.id)}>Remove</button>
+            <button
+              class="text-sm px-2 bg-blue-600 hover:bg-blue-500 rounded text-white cursor-pointer"
+              onclick={() => selectedShipId.set(s.id)}>Focus</button
+            >
+            <button
+              class="text-sm px-2 bg-red-600 rounded text-white cursor-pointer h-6"
+              onclick={() => removeShip(s.id)}>Remove</button
+            >
           </div>
         </li>
       {/each}
@@ -121,32 +152,31 @@
 
 <style>
   .custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-}
+    width: 8px;
+  }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: #1e293b;
-}
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #1e293b;
+  }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #4b5563;
-  border-radius: 4px;
-}
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border-radius: 4px;
+  }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #6b7280;
-}
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+  }
 
-button {
-  cursor: pointer;
-}
+  button {
+    cursor: pointer;
+  }
 
-button:hover {
-  opacity: 0.9;
-}
+  button:hover {
+    opacity: 0.9;
+  }
 
-button:active {
-  opacity: 0.8;
-}
+  button:active {
+    opacity: 0.8;
+  }
 </style>
-

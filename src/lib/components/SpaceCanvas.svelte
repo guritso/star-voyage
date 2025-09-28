@@ -19,7 +19,7 @@
 
   // visual scale: years -> pixels (1 ly = 60 px default)
   let scale = $state(60);
-  let maxZoomOut = 1.1;
+  let maxZoomOut = 0.1;
   let maxZoomIn = 50000;
   let starsSize = $state(3)
   // panning offsets (in pixels)
@@ -62,7 +62,7 @@
 
   // when true, canvas will automatically keep the selected ship centered
   let followShip = $state(false);
-  let sidebarOpen = $state(true);
+  let sidebarOpen = $state(false);
 
   function toCanvas(x: number, y: number) {
     return { x: w / 2 + x + panX, y: h / 2 + y + panY };
@@ -579,84 +579,101 @@
   // change star size based on zoom
   $effect(() => {
     if (scale > 80) starsSize = 3;
-    else starsSize = scale / 30;
+    else starsSize = Math.max(0.1, scale / 30); // Ensure minimum size of 0.1
   });
 
 
 </script>
 
 <div class="fixed inset-0 bg-black overflow-hidden">
-  <div class="relative w-full h-full">
-    <canvas bind:this={canvas} class="w-full h-full block"></canvas>
+  <canvas bind:this={canvas} class="absolute inset-0 w-full h-full block"></canvas>
 
-    <!-- overlays: Controls (top-left), ShipDetail (top-right), Sidebar (left) -->
-    <div class="absolute left-16 top-4 z-50">
-      <div class="bg-transparent">
+  <!-- Mobile-first responsive layout -->
+  <!-- Top controls bar - mobile friendly -->
+  <div class="absolute top-2 left-2 right-2 md:left-4 md:right-auto md:top-4 z-50 flex justify-between items-start">
+    <div class="flex items-center gap-2">
+      <!-- sidebar toggle - mobile friendly -->
+      <button class="w-10 h-10 md:w-10 md:h-10 rounded-full bg-gray-800 flex items-center justify-center shadow cursor-pointer hover:bg-gray-700 transition-colors {sidebarOpen ? 'bg-gray-700' : ''}" onclick={toggleSidebar} aria-label="Toggle sidebar">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
+      <!-- Controls - hidden on mobile, shown on tablet+ -->
+      <div class="hidden md:block rounded-lg p-2">
         <Controls />
       </div>
     </div>
+  </div>
 
-    <!-- unified detail panel: ship -> star -> placeholder -->
-    <div class="absolute right-4 top-20 z-50 w-auto">
-      {#if $selectedShipId}
+  <!-- Mobile controls overlay -->
+  <div class="md:hidden absolute bottom-16 left-2 right-2 z-50">
+    <div class="bg-gray-900/90 backdrop-blur-sm rounded-lg p-3 max-h-64 overflow-y-auto">
+      <Controls />
+    </div>
+  </div>
+
+  <!-- unified detail panel - responsive positioning -->
+  <div class="absolute top-2 right-2 md:right-4 md:top-20 z-50 w-auto max-w-[calc(100vw-1rem)] md:max-w-none">
+    {#if $selectedShipId}
+      <div class="max-w-[280px] md:max-w-none">
         <ShipDetail />
-      {:else if $selectedStarId}
-        <StarDetail />
-      {:else}
-        <div class="p-3 bg-gray-900 rounded text-sm text-gray-200">Click a ship to see details</div>
-      {/if}
-    </div>
-
-    <!-- sidebar: floating panel on the left (scrollbar visually hidden) -->
-    {#if sidebarOpen}
-      <div class="absolute left-4 top-20 bottom-4 z-50 w-80 hide-scrollbar pr-3" style="overflow-y:auto; overflow-x:hidden; scrollbar-width:none; -ms-overflow-style:none;">
-        <div class="h-full">
-          <Sidebar />
-        </div>
       </div>
+    {:else if $selectedStarId}
+      <div class="max-w-[280px] md:max-w-none">
+        <StarDetail />
+      </div>
+    {:else}
+      <div class="p-3 bg-gray-900/80 backdrop-blur-sm rounded text-sm text-gray-200 max-w-[280px] md:max-w-none">Click a ship to see details</div>
     {/if}
+  </div>
 
-    <!-- sidebar toggle -->
-    <button class="absolute left-4 top-4 z-60 w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center shadow cursor-pointer hover:bg-gray-700" onclick={toggleSidebar} aria-label="Toggle sidebar">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button>
-
-    <!-- floating controls bottom-right -->
-  <div class="absolute right-4 bottom-4 flex flex-col gap-2 items-end z-50">
-    <div class="flex flex-col gap-2 items-end z-50">
-      <div class="text-xs text-gray-400">{scale.toFixed(1)}</div>
-      <div class="text-xs text-gray-400">{cursorX.toFixed(0)}, {cursorY.toFixed(0)}</div>
-      <div class="text-xs text-gray-400">{centerX.toFixed(0)}, {centerY.toFixed(0)}</div>
-      <div class="text-xs text-gray-400">{panX.toFixed(0)}, {panY.toFixed(0)}</div>
+  <!-- sidebar - responsive design -->
+  {#if sidebarOpen}
+    <div class="absolute left-2 top-20 bottom-2 md:left-4 md:top-20 md:bottom-4 z-50 hide-scrollbar w-[calc(100vw-1rem)] md:w-80 bg-gray-900/95 backdrop-blur-sm rounded-lg md:rounded-none"
+         style="overflow-y:auto; overflow-x:hidden; scrollbar-width:none; -ms-overflow-style:none; max-height: calc(100vh - 6rem);">
+      <div class="h-full">
+        <Sidebar />
+      </div>
     </div>
-      <button
-        class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center shadow-lg"
-        onclick={centerEarth}
-        aria-label="Center on Earth"
-        title="Center on Earth"
-      >
-        <!-- GPS / pin icon (map pin with center dot) -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <!-- pin outline -->
-          <path d="M12 2C8.686 2 6 4.686 6 8c0 4.418 6 12 6 12s6-7.582 6-12c0-3.314-2.686-6-6-6z" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
-          <!-- center circle -->
-          <circle cx="12" cy="8" r="2" fill="currentColor" />
-        </svg>
-      </button>
+  {/if}
 
-      {#if followShip}
+  <!-- floating controls bottom - responsive -->
+  <div class="absolute bottom-2 right-2 md:right-4 md:bottom-4 z-50 max-w-[calc(100vw-1rem)]">
+    <div class="flex flex-col gap-2 items-end">
+      <!-- Debug info - hidden on mobile for space -->
+      <div class="hidden md:flex flex-col gap-1 items-end text-xs text-gray-400 rounded p-2">
+        <div>{scale.toFixed(1)}</div>
+        <div>{cursorX.toFixed(0)}, {cursorY.toFixed(0)}</div>
+        <div>{centerX.toFixed(0)}, {centerY.toFixed(0)}</div>
+        <div>{panX.toFixed(0)}, {panY.toFixed(0)}</div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="flex gap-2">
         <button
-          class="w-10 h-10 rounded-full bg-red-600 hover:bg-red-500 flex items-center justify-center shadow-lg"
-          onclick={stopFollow}
-          aria-label="Stop following ship"
-          title="Stop following ship"
+          class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center shadow-lg transition-colors"
+          onclick={centerEarth}
+          aria-label="Center on Earth"
+          title="Center on Earth"
         >
-          <!-- Stop / X icon -->
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M6 6l12 12M6 18L18 6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M12 2C8.686 2 6 4.686 6 8c0 4.418 6 12 6 12s6-7.582 6-12c0-3.314-2.686-6-6-6z" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
+            <circle cx="12" cy="8" r="2" fill="currentColor" />
           </svg>
         </button>
-      {/if}
+
+        {#if followShip}
+          <button
+            class="w-10 h-10 rounded-full bg-red-600 hover:bg-red-500 flex items-center justify-center shadow-lg transition-colors"
+            onclick={stopFollow}
+            aria-label="Stop following ship"
+            title="Stop following ship"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M6 6l12 12M6 18L18 6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </button>
+        {/if}
+      </div>
     </div>
   </div>
 </div>
@@ -666,6 +683,13 @@
   .hide-scrollbar::-webkit-scrollbar { display: none; }
   .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-  /* ensure fullscreen canvas container covers viewport without causing page scroll */
-  .fixed.inset-0.overflow-hidden { touch-action: none; }
+  /* ensure canvas is always touch-action none for better performance */
+  canvas {
+    touch-action: none;
+  }
+
+  /* smooth transitions for UI elements */
+  button {
+    transition: all 0.2s ease;
+  }
 </style>
