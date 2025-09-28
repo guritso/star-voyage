@@ -534,6 +534,7 @@
     const stars = get(starsList);
     const s = stars.find((x) => x.id === tid);
     if (!s) return;
+    selectedStarId.set(s.id)
     const idx = stars.findIndex((x) => x.id === s.id);
     const pos = starPosition(s, Math.max(0, idx), stars.length);
     const desired = Math.max(scale, 600);
