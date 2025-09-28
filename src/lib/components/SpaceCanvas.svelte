@@ -19,8 +19,9 @@
 
   // visual scale: years -> pixels (1 ly = 60 px default)
   let scale = $state(60);
-  let maxZoomOut = 0.2;
+  let maxZoomOut = 1.1;
   let maxZoomIn = 50000;
+  let starsSize = $state(3)
   // panning offsets (in pixels)
   let panX = $state(0);
   let panY = $state(0);
@@ -138,11 +139,11 @@
   const earthPos = toCanvas(0, 0);
   ctx.fillStyle = '#4EA8DE';
   ctx.beginPath();
-  ctx.arc(earthPos.x, earthPos.y, 6, 0, Math.PI * 2);
+  ctx.arc(earthPos.x, earthPos.y, starsSize + 3, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = 'rgb(98, 241, 85)';
-  ctx.font = '12px sans-serif';
-  ctx.fillText('Earth', earthPos.x + 8, earthPos.y + 4);
+  ctx.font = `${starsSize + 8}px sans-serif`;
+  //ctx.fillText('Earth', earthPos.x + 8, earthPos.y + 4);
 
   // stars already fetched at the start of draw()
     stars.forEach((s, i) => {
@@ -153,7 +154,7 @@
       // default star style (star dot) - use color data if available
       ctx.fillStyle = s.color || 'rgb(255, 255, 255)';
       ctx.beginPath();
-      ctx.arc(cpos.x, cpos.y, 3, 0, Math.PI * 2);
+      ctx.arc(cpos.x, cpos.y, starsSize, 0, Math.PI * 2);
       ctx.fill();
 
       // if selected star, draw a subtle highlight behind the label so it doesn't overlap text
@@ -573,6 +574,12 @@
       }
       scheduleDraw();
     }
+  });
+
+  // change star size based on zoom
+  $effect(() => {
+    if (scale > 80) starsSize = 3;
+    else starsSize = scale / 30;
   });
 
 
