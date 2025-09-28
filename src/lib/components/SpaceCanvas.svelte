@@ -140,7 +140,7 @@
   ctx.beginPath();
   ctx.arc(earthPos.x, earthPos.y, 6, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = 'rgb(98, 241, 85)';
   ctx.font = '12px sans-serif';
   ctx.fillText('Earth', earthPos.x + 8, earthPos.y + 4);
 
@@ -151,7 +151,7 @@
       const sposZoomed = { x: pos.x * (scale / 60), y: pos.y * (scale / 60) };
       const cpos = toCanvas(sposZoomed.x, sposZoomed.y);
       // default star style (star dot) - use color data if available
-      ctx.fillStyle = s.color || '#fff';
+      ctx.fillStyle = s.color || 'rgb(255, 255, 255)';
       ctx.beginPath();
       ctx.arc(cpos.x, cpos.y, 3, 0, Math.PI * 2);
       ctx.fill();
@@ -162,8 +162,8 @@
         // smaller radius so it doesn't reach the text
         const ringR = 5;
         ctx.arc(cpos.x, cpos.y, ringR, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255,255,255,0.65)';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(0, 195, 255, 0.65)';
+        ctx.lineWidth = 2 ;
         // dashed ring for subtlety
         ctx.setLineDash([3, 2]);
         ctx.stroke();
@@ -172,7 +172,7 @@
 
       // label (draw after highlight so text stays on top)
       if ($tagShow) {
-        ctx.fillStyle = '#ddd';
+        ctx.fillStyle = 'rgb(150, 150, 150)';
         ctx.fillText(`${s.name} (${s.distanceLy} ly)`, cpos.x + 8, cpos.y + 4);
       }
 
