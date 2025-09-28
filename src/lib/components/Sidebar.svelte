@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { starsList, resetApiStars, loadAllApiStars, apiLoading } from '$lib/stars';
+  import { starsList, loadAllStars } from '$lib/stars';
   import { ships, selectedShipId, targetStarId } from '$lib/stores';
   import { get } from 'svelte/store';
   import type { ShipParams } from '$lib/relativity';
@@ -39,15 +39,9 @@
   });
   let speed = $state(0.5); // fraction of c
 
-  // UI helpers for API loading
-  async function reloadApi() {
-    await resetApiStars();
-    await loadAllApiStars();
-  }
-
   // Load local stars on component mount
   $effect(() => {
-    loadAllApiStars();
+    loadAllStars();
   });
 
   function addShip() {
@@ -85,15 +79,14 @@
         <div class="mt-2 flex gap-3">
           <!-- form on the left -->
           <div class="flex-1 flex flex-col gap-2">
-            <input placeholder="Name (optional)" bind:value={name} class="p-2 rounded bg-gray-800 text-white" />
+            <input placeholder="Name (optional)" id="ship-name" bind:value={name} class="p-2 rounded bg-gray-800 text-white" />
             <!-- source selector -->
             <!-- Local stars controls -->
             <div class="flex items-center gap-2 text-sm text-gray-300">
               <span>Stars:</span>
-              <button class="px-2 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-60" class:animate-pulse={$apiLoading} onclick={reloadApi} disabled={$apiLoading}>Reload</button>
             </div>
             <div>
-            <select bind:value={starId} class="w-full p-2 rounded bg-gray-800 text-white">
+            <select bind:value={starId} id="ship-star" size="1" class="custom-scrollbar w-full p-2 rounded bg-gray-800 text-white">
               {#each $starsList as s}
                 <option value={s.id}>{s.name} — {s.distanceLy} ly</option>
               {/each}
@@ -114,17 +107,33 @@
     <h3 class="text-white font-semibold">Active Ships</h3>
     <ul class="mt-2 space-y-2">
       {#each $ships as s}
-        <li class="flex items-center justify-between bg-gray-800 p-2 rounded">
-          <button type="button" class="text-left w-full cursor-pointer select-none hover:bg-gray-700/40 rounded px-1 py-0.5" onclick={() => selectedShipId.set(s.id)} title="Select and focus ship">
-            <div class="text-white">{s.name}</div>
-            <div class="text-xs text-gray-400">to {s.starId} @ {Math.round(s.speedFraction * 1000) / 10}% c</div>
-          </button>
+        <li class="flex items-center justify-between bg-gray-800 p-2 rounded h-15">
+          <div class="text-xs text-gray-400">to {s.starId} @ {Math.round(s.speedFraction * 1000) / 10}% c</div>
           <div class="flex gap-2">
-            <button class="text-sm px-2 bg-blue-600 hover:bg-blue-500 rounded text-white" onclick={() => selectedShipId.set(s.id)}>Focus</button>
-            <button class="text-sm px-2 bg-red-600 rounded text-white" onclick={() => removeShip(s.id)}>Remove</button>
+            <button class="text-sm px-2 bg-blue-600 hover:bg-blue-500 rounded text-white cursor-pointer" onclick={() => selectedShipId.set(s.id)}>Focus</button>
+            <button class="text-sm px-2 bg-red-600 rounded text-white cursor-pointer h-6" onclick={() => removeShip(s.id)}>Remove</button>
           </div>
         </li>
       {/each}
     </ul>
   </div>
 </div>
+
+<style>
+  .custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+</style>

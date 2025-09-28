@@ -7,6 +7,7 @@ export type LocalStar = {
   right_ascension?: string;
   declination?: string;
   apparent_magnitude?: string;
+  color?: string; // hex color code for stellar classification
 };
 
 function parseRAtoHours(ra: string | undefined): number | null {
@@ -111,7 +112,8 @@ export async function fetchLocalStars(): Promise<Star[]> {
       distanceLy: item.distance_light_year,
       raHours,
       decDeg,
-      constellation: item.constellation ?? undefined
+      constellation: item.constellation ?? undefined,
+      color: item.color ?? undefined
     };
   });
   

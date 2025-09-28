@@ -1,5 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
-import { fetchLocalStars } from '$lib/api/stars-api';
+import { fetchLocalStars } from '$lib/data/stars-data';
 
 export type Star = {
   id: string;
@@ -8,29 +8,19 @@ export type Star = {
   description?: string;
   raHours?: number; // right ascension in hours (0-24)
   decDeg?: number;  // declination in degrees (-90..+90)
-  constellation?: string; // constellation name (from API)
+  constellation?: string; // constellation name
+  color?: string; // hex color code for stellar classification
 };
 
 
 
 // Use local stars as default
-export const apiStars = writable<Star[]>([]);
-export const starsList = derived([apiStars], ([$api]) => {
-  return [...$api].sort((a, b) => a.distanceLy - b.distanceLy);
+export const stars = writable<Star[]>([]);
+export const starsList = derived([stars], ([$data]) => {
+  return [...$data].sort((a, b) => a.distanceLy - b.distanceLy);
 });
 
-// API state
-export const apiLoading = writable(false);
-
-export async function resetApiStars() {
-  apiLoading.set(false);
-  apiStars.set([]);
-}
-
-export async function loadAllApiStars() {
-  if (get(apiLoading)) return 0; // prevent concurrent loads
-  apiLoading.set(true);
-  try {
+export async function loadAllStars() {
     
     const list = await fetchLocalStars();
     
@@ -52,11 +42,8 @@ export async function loadAllApiStars() {
     }
     
     const uniqueStars = Array.from(byName.values());
-    apiStars.set(uniqueStars);
-    return uniqueStars.length;
-  } finally {
-    apiLoading.set(false);
-  }
+  stars.set(uniqueStars);
+  return uniqueStars.length;
 }
 
 export function getStarById(id: string) {

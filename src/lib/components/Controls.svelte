@@ -1,5 +1,7 @@
 <script lang="ts">
   import { simTime, simSpeed } from '$lib/stores';
+  import { RotateCcw } from "lucide-svelte";
+
   let playing = $state(false);
   let rafId: number | null = null;
   let last = 0;
@@ -53,10 +55,7 @@
   <div class="flex items-center gap-2">
     <!-- Compact control group: reset, decelerate, step back, play/pause, step forward, accelerate -->
     <button aria-label="Reset" title="Reset" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded" onclick={resetSim}>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="text-white">
-        <path d="M20 12a8 8 0 1 0-2.3 5.7" />
-        <polyline points="20 12 20 6 14 6" />
-      </svg>
+      <RotateCcw size="18" color="white"/>
     </button>
     <button aria-label="Decelerate" title="Decelerate" class="w-10 h-10 flex items-center justify-center bg-gray-800 rounded" onclick={() => { speedVal = Math.max(0.01, speedVal / 2); }}>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="text-white">

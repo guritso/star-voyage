@@ -8,7 +8,7 @@ const config = {
   preprocess: vitePreprocess(),
   // Enable Svelte 5 runes mode (disables legacy mode)
   compilerOptions: {
-    runes: true
+
   },
 
   kit: {

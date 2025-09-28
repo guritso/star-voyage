@@ -142,8 +142,8 @@
       // apply zoom to positions
       const sposZoomed = { x: pos.x * (scale / 60), y: pos.y * (scale / 60) };
       const cpos = toCanvas(sposZoomed.x, sposZoomed.y);
-      // default star style (star dot)
-      ctx.fillStyle = '#fff';
+      // default star style (star dot) - use color data if available
+      ctx.fillStyle = s.color || '#fff';
       ctx.beginPath();
       ctx.arc(cpos.x, cpos.y, 3, 0, Math.PI * 2);
       ctx.fill();
