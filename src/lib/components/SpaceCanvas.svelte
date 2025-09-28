@@ -1,7 +1,7 @@
 <script lang="ts">
   
   import { starsList } from '$lib/stars';
-  import { ships, selectedShipId, simTime, selectedStarId, targetStarId, zoomToStarId } from '$lib/stores';
+  import { ships, selectedShipId, simTime, selectedStarId, targetStarId, zoomToStarId, tagShow } from '$lib/stores';
   import { get } from 'svelte/store';
   import type { ShipParams } from '$lib/relativity';
   import { shipMetrics } from '$lib/relativity';
@@ -163,8 +163,10 @@
       }
 
       // label (draw after highlight so text stays on top)
-      ctx.fillStyle = '#ddd';
-      ctx.fillText(`${s.name} (${s.distanceLy} ly)`, cpos.x + 8, cpos.y + 4);
+      if ($tagShow) {
+        ctx.fillStyle = '#ddd';
+        ctx.fillText(`${s.name} (${s.distanceLy} ly)`, cpos.x + 8, cpos.y + 4);
+      }
 
       // record bounding circle for click detection (slightly larger than dot)
       starBounds.set(s.id, { x: cpos.x, y: cpos.y, r: 6 });
@@ -477,7 +479,7 @@
   // Redraw on store changes (debounced via rAF)
   $effect(() => {
     // touching these stores makes the effect depend on them
-    $ships; $simTime; $selectedStarId; $starsList;
+    $ships; $simTime; $selectedStarId; $starsList; $tagShow;
     scheduleDraw();
   });
 
@@ -551,6 +553,8 @@
       scheduleDraw();
     }
   });
+
+
 </script>
 
 <div class="fixed inset-0 bg-black overflow-hidden">

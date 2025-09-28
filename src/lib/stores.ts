@@ -19,5 +19,8 @@ export const selectedStarId = writable<string | null>(null);
 // Current target star id (used as default when adding a new ship)
 export const targetStarId = writable<string | null>(null);
 
+// Tag visibility
+export const tagShow = writable<boolean>(true);
+
 // Imperative zoom request: when set to a star id, the canvas should zoom to it and then clear back to null
 export const zoomToStarId = writable<string | null>(null);
