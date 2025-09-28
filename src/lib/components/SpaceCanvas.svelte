@@ -346,8 +346,6 @@
   function onWheel(e: WheelEvent) {
     // zoom centered on cursor
     // Manual zoom should cancel auto-follow to honor cursor anchor
-    followShip = false;
-    suppressFollow = true;
     const delta = -e.deltaY;
     const zoomFactor = delta > 0 ? 1.08 : 0.92;
     const rect = canvas.getBoundingClientRect();
