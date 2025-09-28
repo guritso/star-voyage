@@ -18,10 +18,18 @@
   let dpr = 1;
 
   // visual scale: years -> pixels (1 ly = 60 px default)
-  let scale = 60;
+  let scale = $state(60);
+  let maxZoomOut = 0.2;
+  let maxZoomIn = 50000;
   // panning offsets (in pixels)
-  let panX = 0;
-  let panY = 0;
+  let panX = $state(0);
+  let panY = $state(0);
+
+  let cursorX = $state(0);
+  let cursorY = $state(0);
+
+  let centerX = $state(0);
+  let centerY = $state(0);
 
   let isDragging = false;
   let dragStartX = 0;
@@ -309,7 +317,19 @@
   }
 
   function onPointerMove(e: PointerEvent) {
+    const rect = canvas.getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+
+    // convert screen coords to world coords
+    const worldX = (cx - w / 2 - panX) / (scale / 60);
+    const worldY = (cy - h / 2 - panY) / (scale / 60);
+    
+    cursorX = worldX;
+    cursorY = worldY;
+    
     if (!isDragging) return;
+
     const dx = e.clientX - dragStartX;
     const dy = e.clientY - dragStartY;
     if (!didDrag && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) didDrag = true;
@@ -338,7 +358,7 @@
     const worldX = (cx - w / 2 - panX) / (scale / 60);
     const worldY = (cy - h / 2 - panY) / (scale / 60);
 
-    scale = Math.min(10000, Math.max(10, scale * zoomFactor));
+    scale = Math.min(maxZoomIn, Math.max(maxZoomOut, scale * zoomFactor));
 
     // after changing scale, keep world point under cursor by adjusting pan
     panX = cx - w / 2 - worldX * (scale / 60);
@@ -528,6 +548,8 @@
   // Auto-zoom when the target star changes (e.g., user selects in Sidebar or clicks a star)
   let prevTargetForZoom: string | null = $state(null);
   $effect(() => {
+    centerX = panX / (scale / 60);
+    centerY = panY / (scale / 60);
     const tid = $targetStarId;
     if (!tid || tid === prevTargetForZoom) return;
     prevTargetForZoom = tid;
@@ -570,7 +592,7 @@
     </div>
 
     <!-- unified detail panel: ship -> star -> placeholder -->
-    <div class="absolute right-4 top-20 z-50 w-72">
+    <div class="absolute right-4 top-20 z-50 w-auto">
       {#if $selectedShipId}
         <ShipDetail />
       {:else if $selectedStarId}
@@ -596,6 +618,12 @@
 
     <!-- floating controls bottom-right -->
   <div class="absolute right-4 bottom-4 flex flex-col gap-2 items-end z-50">
+    <div class="flex flex-col gap-2 items-end z-50">
+      <div class="text-xs text-gray-400">{scale.toFixed(1)}</div>
+      <div class="text-xs text-gray-400">{cursorX.toFixed(0)}, {cursorY.toFixed(0)}</div>
+      <div class="text-xs text-gray-400">{centerX.toFixed(0)}, {centerY.toFixed(0)}</div>
+      <div class="text-xs text-gray-400">{panX.toFixed(0)}, {panY.toFixed(0)}</div>
+    </div>
       <button
         class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center shadow-lg"
         onclick={centerEarth}

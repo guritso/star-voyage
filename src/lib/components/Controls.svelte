@@ -1,6 +1,6 @@
 <script lang="ts">
   import { simTime, simSpeed, tagShow } from '$lib/stores';
-  import { RotateCcw, Play, Pause, SkipForward, SkipBack, FastForward, Rewind, Tag} from "lucide-svelte";
+  import { RotateCcw, Play, Pause, SkipForward, SkipBack, FastForward, Rewind, Tag } from "lucide-svelte";
 
   let playing = $state(false);
   let tagStatus = $state(true);
