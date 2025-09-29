@@ -39,7 +39,7 @@
   let centerX = $state(0);
   let centerY = $state(0);
 
-  let isDragging = false;
+  let isDragging = $state(false);
   let dragStartX = 0;
   let dragStartY = 0;
   let panStartX = 0;
@@ -650,6 +650,8 @@
 
 <div class="fixed inset-0 bg-black overflow-hidden">
   <canvas bind:this={canvas} class="absolute inset-0 w-full h-full block"
+          class:cursor-grabbing={isDragging}
+
   ></canvas>
 
   <!-- Mobile-first responsive layout -->
@@ -812,6 +814,10 @@
   /* ensure canvas is always touch-action none for better performance */
   canvas {
     touch-action: none;
+  }
+
+  .cursor-grabbing {
+    cursor: grabbing;
   }
 
   /* smooth transitions for UI elements */
