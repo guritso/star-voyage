@@ -18,7 +18,7 @@
   let dpr = 1;
 
   // visual scale: years -> pixels (1 ly = 60 px default)
-  let scale = $state(60);
+  let scale = $state(1000);
   let maxZoomOut = 0.1;
   let maxZoomIn = 50000;
   let starsSize = $state(3)
