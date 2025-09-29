@@ -41,12 +41,13 @@
       targetStarId.set(starId);
     }
   });
-  let speed = $state(0.5); // fraction of c
+  let speedPercent = $state(50); // percentage of c (0-99.999)
 
   function addShip() {
     if (!starId) return;
-    if (speed <= 0 || speed >= 1) {
-      alert("Speed must be between 0 and 1 (fraction of c, <1)");
+    const speedFraction = speedPercent / 100; // convert percentage to fraction
+    if (speedFraction <= 0 || speedFraction >= 1) {
+      alert("Speed must be between 0.01% and 99.999% of c");
       return;
     }
     const id = `ship-${Date.now()}`;
@@ -57,7 +58,7 @@
       name: name || `Ship ${get(ships).length + 1}`,
       starId,
       starDistanceLy: dest ? dest.distanceLy : 0,
-      speedFraction: speed,
+      speedFraction: speedFraction,
       startTime: getTime(),
     };
     ships.update((s) => [...s, ship]);
@@ -102,15 +103,15 @@
         </div>
         <div>
           <label for="ship-speed" class="text-sm text-gray-300"
-            >Speed (fraction of c)</label
+            >Speed (% of c)</label
           >
           <input
             id="ship-speed"
             type="number"
             min="0.001"
-            max="0.99999"
+            max="99.999"
             step="0.001"
-            bind:value={speed}
+            bind:value={speedPercent}
             class="w-full p-2 rounded bg-gray-800 text-white"
           />
         </div>
@@ -132,7 +133,7 @@
           class="flex items-center justify-between bg-gray-800 p-2 rounded h-15"
         >
           <div class="text-xs text-gray-400">
-            to {s.starId} @ {Math.round(s.speedFraction * 1000) / 10}% c
+            to {s.starId} @ {(s.speedFraction * 100)}% c
           </div>
           <div class="flex gap-2">
             <button

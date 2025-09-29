@@ -39,9 +39,9 @@
   let confirmElapsedTerra: number = $derived.by<number>(() => (metrics ? Math.min(metrics.timeTerraYears, totalConfirmTerra) : 0));
 
   function formatPercent(frac: number) {
-    // show percentage with 3 significant digits
+    // show percentage with 3 decimal places without leading zero
     const pct = frac * 100;
-    return `${Number(pct.toPrecision(3))}% c`;
+    return `${pct.toFixed(3)}% c`;
   }
 
   function formatYears(y: number) {
