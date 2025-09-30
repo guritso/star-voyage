@@ -110,7 +110,7 @@
             type="number"
             min="0.001"
             max="99.999"
-            step="0.001"
+            step="1"
             bind:value={speedPercent}
             class="w-full p-2 rounded bg-gray-800 text-white"
           />
