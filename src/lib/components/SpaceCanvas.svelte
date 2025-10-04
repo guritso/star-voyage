@@ -436,6 +436,14 @@
         targetStarId.set(id);
         // deselect ship selection
         selectedShipId.set(null);
+
+        try {
+          if (typeof window !== 'undefined') {
+            sidebarOpen = true;
+          }
+        } catch (err) {
+          // ignore
+        }
         // immediately redraw so highlight appears on a simple click
         draw();
         return;
