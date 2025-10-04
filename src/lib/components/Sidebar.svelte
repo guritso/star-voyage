@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { starsList } from "$lib/stars";
-  import { ships, selectedShipId, targetStarId } from "$lib/stores";
-  import { get } from "svelte/store";
-  import type { ShipParams } from "$lib/relativity";
+  import { starsList } from '$lib/stars';
+  import { ships, selectedShipId, targetStarId } from '$lib/stores';
+  import { get } from 'svelte/store';
+  import type { ShipParams } from '$lib/relativity';
 
-  let name = $state("");
+  let name = $state('');
   // selected star id for new ships
-  let starId = $state<string>("");
+  let starId = $state<string>('');
   // ensure starId is valid when starsList changes
   $effect(() => {
     const list = $starsList as Array<{ id: string }>;
@@ -15,7 +15,7 @@
       if (starId && list.length > 0) {
         starId = list[0].id;
       } else {
-        starId = "";
+        starId = '';
       }
     }
   });
@@ -47,7 +47,7 @@
     if (!starId) return;
     const speedFraction = speedPercent / 100; // convert percentage to fraction
     if (speedFraction <= 0 || speedFraction >= 1) {
-      alert("Speed must be between 0.01% and 99.999% of c");
+      alert('Speed must be between 0.01% and 99.999% of c');
       return;
     }
     const id = `ship-${Date.now()}`;
@@ -62,14 +62,14 @@
       startTime: getTime(),
     };
     ships.update((s) => [...s, ship]);
-    name = "";
+    name = '';
   }
 
   function removeShip(id: string) {
     ships.update((s) => s.filter((x) => x.id !== id));
     selectedShipId.set(null);
   }
-  import { simTime } from "$lib/stores";
+  import { simTime } from '$lib/stores';
   let getTime = () => get(simTime);
 </script>
 
@@ -102,9 +102,7 @@
           </select>
         </div>
         <div>
-          <label for="ship-speed" class="text-sm text-gray-300"
-            >Speed (% of c)</label
-          >
+          <label for="ship-speed" class="text-sm text-gray-300">Speed (% of c)</label>
           <input
             id="ship-speed"
             type="number"
@@ -115,9 +113,8 @@
             class="w-full p-2 rounded bg-gray-800 text-white"
           />
         </div>
-        <button
-          class="mt-2 w-full bg-blue-600 text-white p-2 rounded"
-          onclick={addShip}>Add Ship</button
+        <button class="mt-2 w-full bg-blue-600 text-white p-2 rounded" onclick={addShip}
+          >Add Ship</button
         >
 
         <!-- star detail intentionally omitted here to avoid duplication; rendered in top-right area -->
@@ -129,11 +126,9 @@
     <h3 class="text-white font-semibold">Active Ships</h3>
     <ul class="mt-2 space-y-2">
       {#each $ships as s}
-        <li
-          class="flex items-center justify-between bg-gray-800 p-2 rounded h-15"
-        >
+        <li class="flex items-center justify-between bg-gray-800 p-2 rounded h-15">
           <div class="text-xs text-gray-400">
-            to {s.starId} @ {(s.speedFraction * 100)}% c
+            to {s.starId} @ {s.speedFraction * 100}% c
           </div>
           <div class="flex gap-2">
             <button

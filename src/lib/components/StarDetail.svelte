@@ -3,7 +3,9 @@
   import { selectedStarId } from '$lib/stores';
   import { getStarById } from '$lib/stars';
   // runes-based derived with explicit typing
-  let star: Star | null = $derived.by<Star | null>(() => ($selectedStarId ? getStarById($selectedStarId) ?? null : null));
+  let star: Star | null = $derived.by<Star | null>(() =>
+    $selectedStarId ? (getStarById($selectedStarId) ?? null) : null
+  );
 </script>
 
 {#if star}

@@ -64,11 +64,11 @@ async function loadLocalStars(): Promise<LocalStar[]> {
     if (!response.ok) {
       throw new Error(`Failed to load local stars: ${response.status}`);
     }
-    
+
     const text = await response.text();
     const lines = text.trim().split('\n');
-    const stars: LocalStar[] = lines.map(line => JSON.parse(line));
-    
+    const stars: LocalStar[] = lines.map((line) => JSON.parse(line));
+
     localStarsCache = stars;
     return stars;
   } catch (error) {
@@ -78,7 +78,6 @@ async function loadLocalStars(): Promise<LocalStar[]> {
 }
 
 export async function fetchLocalStars(): Promise<Star[]> {
-  
   const localStars = await loadLocalStars();
   if (localStars.length === 0) {
     console.warn('No local stars data available');
@@ -86,12 +85,12 @@ export async function fetchLocalStars(): Promise<Star[]> {
   }
 
   // Filter stars with distance > 0 and magnitude if specified
-  let filteredStars = localStars.filter(star => {
+  let filteredStars = localStars.filter((star) => {
     // Always filter stars with distance 0 or invalid
     if (star.distance_light_year <= 0 || !Number.isFinite(star.distance_light_year)) {
       return false;
     }
-    
+
     return true;
   });
 
@@ -102,10 +101,10 @@ export async function fetchLocalStars(): Promise<Star[]> {
   const mapped: Star[] = filteredStars.map((item, index) => {
     const raHours = parseRAtoHours(item.right_ascension ?? undefined) ?? undefined;
     const decDeg = parseDecToDegrees(item.declination ?? undefined) ?? undefined;
-    
+
     const baseId = slugify(item.name || `star-${index}`);
     const id = `local-${baseId}-${index}`;
-    
+
     return {
       id,
       name: item.name || `Star ${index}`,
@@ -113,9 +112,9 @@ export async function fetchLocalStars(): Promise<Star[]> {
       raHours,
       decDeg,
       constellation: item.constellation ?? undefined,
-      color: item.color ?? undefined
+      color: item.color ?? undefined,
     };
   });
-  
+
   return mapped;
 }

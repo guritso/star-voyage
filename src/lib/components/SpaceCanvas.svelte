@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { starsList } from "$lib/stars";
+  import { starsList } from '$lib/stars';
   import {
     ships,
     selectedShipId,
@@ -8,14 +8,14 @@
     targetStarId,
     zoomToStarId,
     tagShow,
-  } from "$lib/stores";
-  import { get } from "svelte/store";
-  import type { ShipParams } from "$lib/relativity";
-  import { shipMetrics } from "$lib/relativity";
-  import Controls from "./Controls.svelte";
-  import Sidebar from "./Sidebar.svelte";
-  import ShipDetail from "./ShipDetail.svelte";
-  import StarDetail from "./StarDetail.svelte";
+  } from '$lib/stores';
+  import { get } from 'svelte/store';
+  import type { ShipParams } from '$lib/relativity';
+  import { shipMetrics } from '$lib/relativity';
+  import Controls from './Controls.svelte';
+  import Sidebar from './Sidebar.svelte';
+  import ShipDetail from './ShipDetail.svelte';
+  import StarDetail from './StarDetail.svelte';
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
@@ -86,13 +86,10 @@
   function starPosition(
     star: { id: string; name: string; distanceLy: number; raHours?: number },
     index: number,
-    total: number,
+    total: number
   ) {
     // Option B: angle from RA if available; else stable hash or index/total
-    let u =
-      star.raHours != null && isFinite(star.raHours)
-        ? (star.raHours % 24) / 24
-        : null;
+    let u = star.raHours != null && isFinite(star.raHours) ? (star.raHours % 24) / 24 : null;
     if (u == null) {
       // stable fallback using id/name
       u = hashToUnit(star.id || star.name);
@@ -109,7 +106,7 @@
     if (!ctx) return;
     ctx.clearRect(0, 0, w, h);
     // background
-    ctx.fillStyle = "#030314";
+    ctx.fillStyle = '#030314';
     ctx.fillRect(0, 0, w, h);
     // current stars from selected source
     const stars = get(starsList);
@@ -123,15 +120,10 @@
           const starIdx = stars.findIndex((st) => st.id === star.id);
           const spos = starPosition(star, Math.max(0, starIdx), stars.length);
           const t = get(simTime);
-          const metrics = shipMetrics(
-            ship,
-            ship.starDistanceLy ?? star.distanceLy,
-            t,
-          );
+          const metrics = shipMetrics(ship, ship.starDistanceLy ?? star.distanceLy, t);
           const fraction = Math.min(
             1,
-            metrics.distanceCoveredLy /
-              (ship.starDistanceLy ?? star.distanceLy),
+            metrics.distanceCoveredLy / (ship.starDistanceLy ?? star.distanceLy)
           );
           const sx = 0 + (spos.x - 0) * fraction;
           const sy = 0 + (spos.y - 0) * fraction;
@@ -142,10 +134,7 @@
           const newPanX = -sxz;
           const newPanY = -syz;
           const EPS = 1e-3;
-          if (
-            Math.abs(newPanX - panX) > EPS ||
-            Math.abs(newPanY - panY) > EPS
-          ) {
+          if (Math.abs(newPanX - panX) > EPS || Math.abs(newPanY - panY) > EPS) {
             panX = newPanX;
             panY = newPanY;
           }
@@ -161,11 +150,11 @@
 
     // Earth at scene origin (apply pan/zoom via toCanvas)
     const earthPos = toCanvas(0, 0);
-    ctx.fillStyle = "#4EA8DE";
+    ctx.fillStyle = '#4EA8DE';
     ctx.beginPath();
     ctx.arc(earthPos.x, earthPos.y, starsSize + 3, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "rgb(98, 241, 85)";
+    ctx.fillStyle = 'rgb(98, 241, 85)';
     ctx.font = `${starsSize + 8}px sans-serif`;
     //ctx.fillText('Earth', earthPos.x + 8, earthPos.y + 4);
 
@@ -176,7 +165,7 @@
       const sposZoomed = { x: pos.x * (scale / 60), y: pos.y * (scale / 60) };
       const cpos = toCanvas(sposZoomed.x, sposZoomed.y);
       // default star style (star dot) - use color data if available
-      ctx.fillStyle = s.color || "rgb(255, 255, 255)";
+      ctx.fillStyle = s.color || 'rgb(255, 255, 255)';
       ctx.beginPath();
       ctx.arc(cpos.x, cpos.y, starsSize, 0, Math.PI * 2);
       ctx.fill();
@@ -187,7 +176,7 @@
         // smaller radius so it doesn't reach the text
         const ringR = 5;
         ctx.arc(cpos.x, cpos.y, ringR, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(0, 195, 255, 0.65)";
+        ctx.strokeStyle = 'rgba(0, 195, 255, 0.65)';
         ctx.lineWidth = 2;
         // dashed ring for subtlety
         ctx.setLineDash([3, 2]);
@@ -197,7 +186,7 @@
 
       // label (draw after highlight so text stays on top)
       if ($tagShow) {
-        ctx.fillStyle = "rgb(150, 150, 150)";
+        ctx.fillStyle = 'rgb(150, 150, 150)';
         ctx.fillText(`${s.name} (${s.distanceLy} ly)`, cpos.x + 8, cpos.y + 4);
       }
 
@@ -216,8 +205,7 @@
       if (!star) return;
       const metrics = shipMetrics(ship, star.distanceLy, t);
       const arrived =
-        metrics.distanceRemainingLy <= 1e-9 ||
-        metrics.distanceCoveredLy >= star.distanceLy;
+        metrics.distanceRemainingLy <= 1e-9 || metrics.distanceCoveredLy >= star.distanceLy;
       if (arrived) {
         const list = arrivedByStar.get(star.id) ?? [];
         list.push(ship.id);
@@ -231,14 +219,10 @@
       if (!star) return;
       const sidx = stars.findIndex((st) => st.id === star.id);
       const spos = starPosition(star, Math.max(0, sidx), stars.length);
-      const metrics = shipMetrics(
-        ship,
-        ship.starDistanceLy ?? star.distanceLy,
-        t,
-      );
+      const metrics = shipMetrics(ship, ship.starDistanceLy ?? star.distanceLy, t);
       const fraction = Math.min(
         1,
-        metrics.distanceCoveredLy / (ship.starDistanceLy ?? star.distanceLy),
+        metrics.distanceCoveredLy / (ship.starDistanceLy ?? star.distanceLy)
       );
 
       // ship color
@@ -247,8 +231,7 @@
       const stroke = `hsl(${hue} 60% 40%)`;
 
       // Determine if the ship has arrived
-      const arrived =
-        fraction >= 1 - 1e-9 || metrics.distanceRemainingLy <= 1e-9;
+      const arrived = fraction >= 1 - 1e-9 || metrics.distanceRemainingLy <= 1e-9;
 
       if (arrived) {
         // Park the ship to the left of the star, smaller, stacking horizontally
@@ -280,7 +263,7 @@
         ctx.stroke();
 
         if ($selectedShipId === ship.id) {
-          ctx.strokeStyle = "rgba(255,255,255,0.9)";
+          ctx.strokeStyle = 'rgba(255,255,255,0.9)';
           ctx.lineWidth = 1.2;
           ctx.stroke();
         }
@@ -329,7 +312,7 @@
 
         // if selected, draw a thin white outline
         if ($selectedShipId === ship.id) {
-          ctx.strokeStyle = "rgba(255,255,255,0.9)";
+          ctx.strokeStyle = 'rgba(255,255,255,0.9)';
           ctx.lineWidth = 1.2;
           ctx.stroke();
         }
@@ -428,10 +411,7 @@
     sidebarOpen = !sidebarOpen;
   }
 
-  const shipBounds = new Map<
-    string,
-    { x: number; y: number; w: number; h: number }
-  >();
+  const shipBounds = new Map<string, { x: number; y: number; w: number; h: number }>();
 
   function handleClick(e: MouseEvent) {
     // ignore clicks that are actually the end of a drag
@@ -477,22 +457,20 @@
 
   // Hide page scrollbar while fullscreen canvas is active
   $effect(() => {
-    if (typeof document !== "undefined") {
+    if (typeof document !== 'undefined') {
       prevOverflow =
-        document.documentElement.style.overflow ||
-        document.body.style.overflow ||
-        null;
-      document.documentElement.style.overflow = "hidden";
-      document.body.style.overflow = "hidden";
+        document.documentElement.style.overflow || document.body.style.overflow || null;
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
     }
     return () => {
-      if (typeof document !== "undefined") {
+      if (typeof document !== 'undefined') {
         if (prevOverflow !== null) {
           document.documentElement.style.overflow = prevOverflow;
           document.body.style.overflow = prevOverflow;
         } else {
-          document.documentElement.style.overflow = "";
-          document.body.style.overflow = "";
+          document.documentElement.style.overflow = '';
+          document.body.style.overflow = '';
         }
       }
     };
@@ -507,7 +485,7 @@
       const cssH = canvas!.clientHeight || h;
       w = cssW;
       h = cssH;
-      dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+      dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
 
       // set actual pixel size
       canvas!.width = Math.max(1, Math.round(w * dpr));
@@ -516,14 +494,14 @@
       canvas!.style.width = `${w}px`;
       canvas!.style.height = `${h}px`;
 
-      ctx = canvas!.getContext("2d") as CanvasRenderingContext2D;
+      ctx = canvas!.getContext('2d') as CanvasRenderingContext2D;
       // reset any existing transform and scale drawing operations to DPP
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     _resizeHandler();
-    window.addEventListener("resize", _resizeHandler);
+    window.addEventListener('resize', _resizeHandler);
     return () => {
-      if (_resizeHandler) window.removeEventListener("resize", _resizeHandler);
+      if (_resizeHandler) window.removeEventListener('resize', _resizeHandler);
     };
   });
 
@@ -531,18 +509,18 @@
   $effect(() => {
     if (!canvas) return;
     const c = canvas;
-    c.addEventListener("pointerdown", onPointerDown);
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerup", onPointerUp);
-    c.addEventListener("wheel", onWheel, { passive: false } as any);
-    c.addEventListener("click", handleClick);
+    c.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    c.addEventListener('wheel', onWheel, { passive: false } as any);
+    c.addEventListener('click', handleClick);
     scheduleDraw();
     return () => {
-      c.removeEventListener("click", handleClick);
-      c.removeEventListener("pointerdown", onPointerDown);
-      c.removeEventListener("wheel", onWheel as any);
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", onPointerUp);
+      c.removeEventListener('click', handleClick);
+      c.removeEventListener('pointerdown', onPointerDown);
+      c.removeEventListener('wheel', onWheel as any);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
     };
   });
 
@@ -558,12 +536,7 @@
   });
 
   // Smooth pan+zoom animation helper
-  function animateToWorld(
-    xLy: number,
-    yLy: number,
-    desiredScale: number,
-    durationMs = 350,
-  ) {
+  function animateToWorld(xLy: number, yLy: number, desiredScale: number, durationMs = 350) {
     followShip = false;
     suppressFollow = true;
     const startScale = scale;
@@ -649,9 +622,10 @@
 </script>
 
 <div class="fixed inset-0 bg-black overflow-hidden">
-  <canvas bind:this={canvas} class="absolute inset-0 w-full h-full block"
-          class:cursor-grabbing={isDragging}
-
+  <canvas
+    bind:this={canvas}
+    class="absolute inset-0 w-full h-full block"
+    class:cursor-grabbing={isDragging}
   ></canvas>
 
   <!-- Mobile-first responsive layout -->
@@ -692,9 +666,7 @@
 
   <!-- Mobile controls overlay -->
   <div class="md:hidden absolute bottom-16 left-2 right-2 z-50">
-    <div
-      class="bg-gray-900/90 backdrop-blur-sm rounded-lg p-3 max-h-64 overflow-y-auto"
-    >
+    <div class="bg-gray-900/90 backdrop-blur-sm rounded-lg p-3 max-h-64 overflow-y-auto">
       <Controls />
     </div>
   </div>
@@ -733,14 +705,10 @@
   {/if}
 
   <!-- floating controls bottom - responsive -->
-  <div
-    class="absolute bottom-2 right-2 md:right-4 md:bottom-4 z-50 max-w-[calc(100vw-1rem)]"
-  >
+  <div class="absolute bottom-2 right-2 md:right-4 md:bottom-4 z-50 max-w-[calc(100vw-1rem)]">
     <div class="flex flex-col gap-2 items-end">
       <!-- Debug info - hidden on mobile for space -->
-      <div
-        class="hidden md:flex flex-col gap-1 items-end text-xs text-gray-400 rounded p-2"
-      >
+      <div class="hidden md:flex flex-col gap-1 items-end text-xs text-gray-400 rounded p-2">
         <div>{scale.toFixed(1)}</div>
         <div>{cursorX.toFixed(0)}, {cursorY.toFixed(0)}</div>
         <div>{centerX.toFixed(0)}, {centerY.toFixed(0)}</div>

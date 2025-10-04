@@ -32,11 +32,7 @@ export function metersToLy(meters: number) {
 }
 
 // Given ship parameters and a global simulation time (years), compute metrics
-export function shipMetrics(
-  ship: ShipParams,
-  starDistanceLy: number,
-  simTimeYears: number
-) {
+export function shipMetrics(ship: ShipParams, starDistanceLy: number, simTimeYears: number) {
   const v = ship.speedFraction; // fraction of c
   // Using natural units: 1 ly per year for light. So if v is fraction of c,
   // speed in ly/year = v. This simplifies many calculations and avoids
@@ -72,7 +68,7 @@ export function shipMetrics(
     timeRemainingShipYears,
     lorentz,
     timeOfConfirmationTerra,
-    timeOfArrivalTerra
+    timeOfArrivalTerra,
   };
 }
 
