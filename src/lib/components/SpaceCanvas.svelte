@@ -719,8 +719,8 @@
       <div class="hidden md:flex flex-col gap-1 items-end text-xs text-gray-400 rounded p-2">
         <div>{scale.toFixed(1)}</div>
         <div>{cursorX.toFixed(0)}, {cursorY.toFixed(0)}</div>
-        <div>{centerX.toFixed(0)}, {centerY.toFixed(0)}</div>
-        <div>{panX.toFixed(0)}, {panY.toFixed(0)}</div>
+        <div>{-centerX.toFixed(0)}, {-centerY.toFixed(0)}</div>
+        <div>{-panX.toFixed(0)}, {-panY.toFixed(0)}</div>
       </div>
 
       <!-- Action buttons -->
