@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { selectedShipId, ships, simTime } from '$lib/stores';
+  import { selectedShipId, ships } from '$lib/stores/ships';
+  import { simTime } from '$lib/stores/simulation';
   import { getStarById } from '$lib/stars';
-  import { shipMetrics, properTimeFactor } from '$lib/relativity';
-  import type { ShipParams } from '$lib/relativity';
+  import { shipMetrics, properTimeFactor } from '$lib/utils';
+  import type { ShipParams } from '$lib/types';
 
   // Use Svelte 5 runes ($derived.by) with explicit types
   let ship: ShipParams | null = $derived.by<ShipParams | null>(() =>

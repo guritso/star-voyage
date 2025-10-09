@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { simTime, simSpeed, tagShow } from '$lib/stores';
+  import { simTime, simSpeed } from '$lib/stores/simulation';
+  import { tagShow } from '$lib/stores/ui';
   import {
     RotateCcw,
     Play,

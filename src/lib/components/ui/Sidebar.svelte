@@ -1,8 +1,9 @@
 <script lang="ts">
   import { starsList } from '$lib/stars';
-  import { ships, selectedShipId, targetStarId } from '$lib/stores';
+  import { ships, selectedShipId, targetStarId } from '$lib/stores/ships';
+  import { simTime } from '$lib/stores/simulation';
   import { get } from 'svelte/store';
-  import type { ShipParams } from '$lib/relativity';
+  import type { ShipParams } from '$lib/types';
 
   let name = $state('');
   // selected star id for new ships
@@ -69,7 +70,7 @@
     ships.update((s) => s.filter((x) => x.id !== id));
     selectedShipId.set(null);
   }
-  import { simTime } from '$lib/stores';
+
   let getTime = () => get(simTime);
 </script>
 

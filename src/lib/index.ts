@@ -1,1 +1,10 @@
-// place files you want to import through the `$lib` alias in this folder.
+// Main library exports for Star Voyage project
+
+// Re-export all major modules
+export * from './types';
+export * from './constants';
+export * from './utils';
+export * from './stores';
+export * from './components';
+export * from './stars';
+export * from './relativity';

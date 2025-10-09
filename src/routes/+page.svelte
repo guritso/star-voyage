@@ -1,5 +1,5 @@
 <script lang="ts">
-  import SpaceCanvas from '$lib/components/SpaceCanvas.svelte';
+  import SpaceCanvas from '$lib/components/canvas/SpaceCanvas.svelte';
   import { loadAllStars } from '$lib/stars';
   import { browser } from '$app/environment';
 

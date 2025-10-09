@@ -1,21 +1,16 @@
 <script lang="ts">
   import { starsList } from '$lib/stars';
-  import {
-    ships,
-    selectedShipId,
-    simTime,
-    selectedStarId,
-    targetStarId,
-    zoomToStarId,
-    tagShow,
-  } from '$lib/stores';
+  import { ships, selectedShipId, targetStarId } from '$lib/stores/ships';
+  import { simTime } from '$lib/stores/simulation';
+  import { selectedStarId, zoomToStarId } from '$lib/stores/stars';
+  import { tagShow } from '$lib/stores/ui';
   import { get } from 'svelte/store';
-  import type { ShipParams } from '$lib/relativity';
-  import { shipMetrics } from '$lib/relativity';
-  import Controls from './Controls.svelte';
-  import Sidebar from './Sidebar.svelte';
-  import ShipDetail from './ShipDetail.svelte';
-  import StarDetail from './StarDetail.svelte';
+  import type { ShipParams } from '$lib/types';
+  import { shipMetrics } from '$lib/utils';
+  import Controls from '../ui/Controls.svelte';
+  import Sidebar from '../ui/Sidebar.svelte';
+  import ShipDetail from '../details/ShipDetail.svelte';
+  import StarDetail from '../details/StarDetail.svelte';
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;

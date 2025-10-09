@@ -1,4 +1,4 @@
-import type { Star } from '$lib/stars';
+import type { Star } from '$lib/types';
 import csv from '$lib/assets/stars.csv?raw';
 
 export type LocalCsvRow = {
@@ -21,7 +21,6 @@ function hmsToHours(h: number, m: number, s: number): number | null {
   return Number.isFinite(value) ? value : null;
 }
 
-
 function slugify(input: string): string {
   return input
     .toLowerCase()
@@ -42,7 +41,19 @@ async function loadLocalStars(): Promise<LocalCsvRow[]> {
     const lines = csv.trim().split('\n');
     const dataLines = lines.slice(1); // skip header
     const stars: LocalCsvRow[] = dataLines.map((line) => {
-      const [id, name, constellation, raHour, raMin, raSec, decDeg, decMin, decSec, magnitude, lyDistance] = line.split(',');
+      const [
+        id,
+        name,
+        constellation,
+        raHour,
+        raMin,
+        raSec,
+        decDeg,
+        decMin,
+        decSec,
+        magnitude,
+        lyDistance,
+      ] = line.split(',');
       return {
         ID: id,
         name: name,
