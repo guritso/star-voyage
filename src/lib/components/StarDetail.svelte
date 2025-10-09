@@ -16,6 +16,9 @@
       {#if star.constellation}
         <div>Constellation: {star.constellation}</div>
       {/if}
+      {#if star.magnitude}
+        <div>Magnitude: {star.magnitude}</div>
+      {/if}
       {#if star.description}
         <div class="text-xs text-gray-400">{star.description}</div>
       {/if}

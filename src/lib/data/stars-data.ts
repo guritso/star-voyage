@@ -99,6 +99,7 @@ export async function fetchLocalStars(): Promise<Star[]> {
       decDeg: undefined, // Not used in the project
       constellation: item.constellation ?? undefined,
       color: undefined,
+      magnitude: item.magnitude ?? undefined,
     };
   });
 

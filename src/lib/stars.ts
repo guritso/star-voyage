@@ -10,6 +10,7 @@ export type Star = {
   decDeg?: number; // declination in degrees (-90..+90)
   constellation?: string; // constellation name
   color?: string; // hex color code for stellar classification
+  magnitude?: number; // magnitude of the star
 };
 // Use local stars as default
 export const stars = writable<Star[]>([]);
