@@ -5,46 +5,22 @@ export type LocalCsvRow = {
   ID: string;
   name: string;
   constellation: string;
-  RA_hour: string;
-  RA_min: string;
-  RA_sec: string;
-  dec_deg: string;
-  dec_min: string;
-  dec_sec: string;
-  magnitude: string;
-  LY_distance: string;
+  RA_hour: number;
+  RA_min: number;
+  RA_sec: number;
+  dec_deg: number;
+  dec_min: number;
+  dec_sec: number;
+  magnitude: number;
+  LY_distance: number;
 };
 
-function parseNumberOrNull(input: string): number | null {
-  if (input === undefined || input === null) return null;
-  const trimmed = String(input).trim();
-  if (trimmed === '') return null;
-  const n = Number(trimmed);
-  return Number.isFinite(n) ? n : null;
-}
-
-function numberOrZero(input: string): number {
-  const n = parseNumberOrNull(input);
-  return n ?? 0;
-}
-
-function hmsToHours(h: string, m: string, s: string): number | null {
-  const hh = parseNumberOrNull(h) ?? 0;
-  const mm = parseNumberOrNull(m) ?? 0;
-  const ss = parseNumberOrNull(s) ?? 0;
-  const value = hh + mm / 60 + ss / 3600;
+function hmsToHours(h: number, m: number, s: number): number | null {
+  if (!Number.isFinite(h) || !Number.isFinite(m) || !Number.isFinite(s)) return null;
+  const value = h + m / 60 + s / 3600;
   return Number.isFinite(value) ? value : null;
 }
 
-function dmsToDegrees(d: string, m: string, s: string): number | null {
-  if (!d) return null;
-  const sign = d.startsWith('-') ? -1 : 1;
-  const absDeg = parseNumberOrNull(d.replace(/^[-+]/, '')) ?? 0;
-  const mm = parseNumberOrNull(m) ?? 0;
-  const ss = parseNumberOrNull(s) ?? 0;
-  const value = sign * (absDeg + mm / 60 + ss / 3600);
-  return Number.isFinite(value) ? value : null;
-}
 
 function slugify(input: string): string {
   return input
@@ -71,14 +47,14 @@ async function loadLocalStars(): Promise<LocalCsvRow[]> {
         ID: id,
         name: name,
         constellation: constellation,
-        RA_hour: raHour,
-        RA_min: raMin,
-        RA_sec: raSec,
-        dec_deg: decDeg,
-        dec_min: decMin,
-        dec_sec: decSec,
-        magnitude: magnitude,
-        LY_distance: lyDistance,
+        RA_hour: Number(raHour),
+        RA_min: Number(raMin),
+        RA_sec: Number(raSec),
+        dec_deg: Number(decDeg),
+        dec_min: Number(decMin),
+        dec_sec: Number(decSec),
+        magnitude: Number(magnitude),
+        LY_distance: Number(lyDistance),
       };
     });
 
@@ -99,20 +75,18 @@ export async function fetchLocalStars(): Promise<Star[]> {
 
   // Filter stars with distance > 0 and magnitude if specified
   let filteredStars = localStars.filter((star) => {
-    const dist = numberOrZero(star.LY_distance);
-    if (dist <= 0 || !Number.isFinite(dist)) {
+    if (star.LY_distance <= 0 || !Number.isFinite(star.LY_distance)) {
       return false;
     }
     return true;
   });
 
   // Sort by distance (nearest first)
-  filteredStars.sort((a, b) => numberOrZero(a.LY_distance) - numberOrZero(b.LY_distance));
+  filteredStars.sort((a, b) => a.LY_distance - b.LY_distance);
 
   // Convert to Star format
   const mapped: Star[] = filteredStars.map((item, index) => {
     const raHours = hmsToHours(item.RA_hour, item.RA_min, item.RA_sec) ?? undefined;
-    const decDeg = dmsToDegrees(item.dec_deg, item.dec_min, item.dec_sec) ?? undefined;
 
     const baseId = slugify(item.name || `star-${index}`);
     const id = `local-${baseId}-${index}`;
@@ -120,9 +94,9 @@ export async function fetchLocalStars(): Promise<Star[]> {
     return {
       id,
       name: item.name || `Star ${index}`,
-      distanceLy: numberOrZero(item.LY_distance),
+      distanceLy: item.LY_distance,
       raHours,
-      decDeg,
+      decDeg: undefined, // Not used in the project
       constellation: item.constellation ?? undefined,
       color: undefined,
     };
