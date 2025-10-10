@@ -143,15 +143,15 @@
       }
     }
 
-    // Earth at scene origin (apply pan/zoom via toCanvas)
-    const earthPos = toCanvas(0, 0);
-    ctx.fillStyle = '#4EA8DE';
+    // Sun at scene origin (apply pan/zoom via toCanvas)
+    const sunPos = toCanvas(0, 0);
+    ctx.fillStyle = '#FFD700'; // Golden yellow for the Sun
     ctx.beginPath();
-    ctx.arc(earthPos.x, earthPos.y, starsSize + 3, 0, Math.PI * 2);
+    ctx.arc(sunPos.x, sunPos.y, starsSize, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = 'rgb(98, 241, 85)';
+    ctx.fillStyle = 'rgb(150, 150, 150)';
     ctx.font = `${starsSize + 8}px sans-serif`;
-    //ctx.fillText('Earth', earthPos.x + 8, earthPos.y + 4);
+    ctx.fillText('Sun', sunPos.x + 8, sunPos.y + 4);
 
     // stars already fetched at the start of draw()
     stars.forEach((s, i) => {
@@ -393,8 +393,8 @@
     e.preventDefault();
   }
 
-  function centerEarth() {
-    // reset pan so earth (scene origin) is centered in canvas
+  function centerSun() {
+    // reset pan so sun (scene origin) is centered in canvas
     animateToWorld(0, 0, 1000);
   }
 
@@ -722,9 +722,9 @@
       <div class="flex gap-2">
         <button
           class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center shadow-lg transition-colors"
-          onclick={centerEarth}
-          aria-label="Center on Earth"
-          title="Center on Earth"
+          onclick={centerSun}
+          aria-label="Center on Sun"
+          title="Center on Sun"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
