@@ -88,32 +88,96 @@
 </script>
 
 {#if ship}
-  <div class="p-3 bg-gray-900 rounded text-sm text-gray-200">
-    <h3 class="font-semibold text-white">{ship.name}</h3>
-    <div class="mt-2 space-y-1">
-      <div>Destination: {getStarById(ship.starId)?.name}</div>
-      <div>Speed: {formatPercent(ship.speedFraction)}</div>
+  <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl shadow-xl border border-gray-700 overflow-hidden">
+    <!-- Header -->
+    <div class="bg-gray-800 px-4 py-3 border-b border-gray-700">
+      <h3 class="font-bold text-white text-lg">{ship.name}</h3>
+    </div>
+
+    <div class="p-4 space-y-4">
+      <!-- Mission Info -->
+      <div class="space-y-2">
+        <h4 class="text-sm font-semibold text-blue-400 uppercase tracking-wide">Mission</h4>
+        <div class="grid grid-cols-1 gap-2">
+          <div class="flex justify-between items-center py-2 px-3 bg-gray-800 rounded-lg">
+            <span class="text-gray-300">Destination</span>
+            <span class="text-white font-medium">{getStarById(ship.starId)?.name}</span>
+          </div>
+          <div class="flex justify-between items-center py-2 px-3 bg-gray-800 rounded-lg">
+            <span class="text-gray-300">Speed</span>
+            <span class="text-green-400 font-mono font-medium">{formatPercent(ship.speedFraction)}</span>
+          </div>
+        </div>
+      </div>
+
       {#if metrics}
-        <div>
-          Time elapsed (Earth): {formatYears(displayTimeTerra)}
-          <span class="text-gray-400">({yearsToDays(displayTimeTerra)})</span>
+        <!-- Progress Section -->
+        <div class="space-y-2">
+          <h4 class="text-sm font-semibold text-gray-300 uppercase tracking-wide">Progress</h4>
+          <div class="space-y-3">
+            <!-- Distance Progress Bar -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs text-gray-400">
+                <span>Distance</span>
+                <span>{formatLy(metrics.distanceCoveredLy)} / {formatLy(ship.starDistanceLy)}</span>
+              </div>
+              <div class="w-full bg-gray-700 rounded-full h-2">
+                <div 
+                  class="bg-gray-400 h-2 rounded-full transition-all duration-300"
+                  style="width: {(metrics.distanceCoveredLy / ship.starDistanceLy * 100).toFixed(1)}%"
+                ></div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div>
-          Time elapsed (Ship): {formatYears(displayTimeShip)}
-          <span class="text-gray-400">({yearsToDays(displayTimeShip)})</span>
+
+        <!-- Time Metrics -->
+        <div class="space-y-2">
+          <h4 class="text-sm font-semibold text-gray-300 uppercase tracking-wide">Time</h4>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="bg-gray-800 rounded-lg p-3 text-center">
+              <div class="text-xs text-gray-400 mb-1">Earth Time</div>
+              <div class="text-white font-bold">{formatYears(displayTimeTerra)}</div>
+              <div class="text-xs text-gray-500">{yearsToDays(displayTimeTerra)}</div>
+            </div>
+            <div class="bg-gray-800 rounded-lg p-3 text-center">
+              <div class="text-xs text-gray-400 mb-1">Ship Time</div>
+              <div class="text-gray-200 font-bold">{formatYears(displayTimeShip)}</div>
+              <div class="text-xs text-gray-500">{yearsToDays(displayTimeShip)}</div>
+            </div>
+          </div>
         </div>
-        <div>Distance covered: {formatLy(metrics.distanceCoveredLy)}</div>
-        <div>Distance remaining: {formatLy(metrics.distanceRemainingLy)}</div>
-        <div>Lorentz γ: {formatGamma(metrics.lorentz)}</div>
-        <div>
-          Arrival progress (Earth): {formatYears(arrivalElapsedProgress)} / {formatYears(
-            totalTravelTerra
-          )}
+
+        <!-- Physics -->
+        <div class="space-y-2">
+          <h4 class="text-sm font-semibold text-gray-300 uppercase tracking-wide">Physics</h4>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="bg-gray-800 rounded-lg p-3 text-center">
+              <div class="text-xs text-gray-400 mb-1">Distance Remaining</div>
+              <div class="text-white font-bold">{formatLy(metrics.distanceRemainingLy)}</div>
+            </div>
+            <div class="bg-gray-800 rounded-lg p-3 text-center">
+              <div class="text-xs text-gray-400 mb-1">Lorentz Factor</div>
+              <div class="text-gray-200 font-bold">{formatGamma(metrics.lorentz)}</div>
+            </div>
+          </div>
         </div>
-        <div>
-          Confirmation progress: {formatYears(confirmElapsedTerra)} / {formatYears(
-            totalConfirmTerra
-          )}
+
+        <!-- Confirmation -->
+        <div class="space-y-2">
+          <h4 class="text-sm font-semibold text-gray-300 uppercase tracking-wide">Confirmation</h4>
+          <div class="bg-gray-800 rounded-lg p-3">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-300">Signal Progress</span>
+              <span class="text-white">{formatYears(confirmElapsedTerra)} / {formatYears(totalConfirmTerra)}</span>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-1.5 mt-2">
+              <div 
+                class="bg-gray-500 h-1.5 rounded-full transition-all duration-300"
+                style="width: {(confirmElapsedTerra / totalConfirmTerra * 100).toFixed(1)}%"
+              ></div>
+            </div>
+          </div>
         </div>
       {/if}
     </div>

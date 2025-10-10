@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { starsList } from '$lib/stars';
+  import { starsList, getStarById } from '$lib/stars';
   import { ships, selectedShipId, targetStarId } from '$lib/stores/ships';
   import { simTime } from '$lib/stores/simulation';
   import { zoomToStarId } from '$lib/stores/stars';
@@ -90,114 +90,138 @@
   }
 </script>
 
-<div class="space-y-4">
+<div class="space-y-3">
   <!-- Search Section -->
-  <div class="bg-gray-900 p-3 rounded">
-    <h3 class="text-white font-semibold mb-2">Search Stars</h3>
-    <div class="space-y-2">
+  <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg shadow-lg border border-gray-700 overflow-hidden">
+    <div class="bg-gray-800 px-3 py-2 border-b border-gray-700">
+      <h3 class="font-semibold text-white text-sm">Search Stars</h3>
+    </div>
+    <div class="p-3 space-y-2">
       <input
         placeholder="Type star name..."
         bind:value={searchQuery}
-        class="w-full p-2 rounded bg-gray-800 text-white placeholder-gray-400"
+        class="w-full p-2 rounded bg-gray-800 text-white placeholder-gray-400 border border-gray-700 focus:border-gray-500 focus:outline-none text-sm"
       />
       {#if searchQuery && filteredStars.length > 0}
         <div class="max-h-80 overflow-y-auto space-y-1">
-          {#each filteredStars.slice(0, 5) as star}
-            <div class="flex items-center justify-between bg-gray-800 p-2 rounded text-sm">
-              <div class="text-gray-200">
-                {star.name} — {star.distanceLy} ly
+          {#each filteredStars.slice(0, 4) as star}
+            <div class="flex items-center justify-between bg-gray-800 p-2 rounded border border-gray-700">
+              <div class="text-gray-200 text-sm">
+                <div class="font-medium">{star.name}</div>
+                <div class="text-xs text-gray-400">{star.distanceLy} ly</div>
               </div>
               <button
-                class="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-500 rounded text-white cursor-pointer"
+                class="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-white cursor-pointer transition-colors"
                 onclick={() => focusOnStar(star.id)}
               >
                 Focus
               </button>
             </div>
           {/each}
-          {#if filteredStars.length > 10}
-            <div class="text-xs text-gray-400 text-center">
-              Showing first 10 of {filteredStars.length} results
+          {#if filteredStars.length > 5}
+            <div class="text-xs text-gray-400 text-center py-1">
+              Showing first 5 of {filteredStars.length} results
             </div>
           {/if}
         </div>
       {:else if searchQuery && filteredStars.length === 0}
-        <div class="text-sm text-gray-400 text-center py-2">
+        <div class="text-xs text-gray-400 text-center py-2 bg-gray-800 rounded border border-gray-700">
           No stars found matching "{searchQuery}"
         </div>
       {/if}
     </div>
   </div>
 
-  <div class="bg-gray-900 p-3 rounded">
-    <h3 class="text-white font-semibold">Add Ship</h3>
-    <div class="mt-2 flex gap-3">
-      <!-- form on the left -->
-      <div class="flex-1 flex flex-col gap-2">
+  <!-- Add Ship Section -->
+  <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg shadow-lg border border-gray-700 overflow-hidden">
+    <div class="bg-gray-800 px-3 py-2 border-b border-gray-700">
+      <h3 class="font-semibold text-white text-sm">Add Ship</h3>
+    </div>
+    <div class="p-3 space-y-2">
+      <div>
+        <label for="ship-name" class="text-xs font-semibold text-gray-300 uppercase tracking-wide">Ship Name</label>
         <input
-          placeholder="Name (optional)"
+          placeholder="Optional name"
           id="ship-name"
           bind:value={name}
-          class="p-2 rounded bg-gray-800 text-white"
+          class="w-full p-2 rounded bg-gray-800 text-white placeholder-gray-400 border border-gray-700 focus:border-gray-500 focus:outline-none text-sm"
         />
-        <!-- source selector -->
-        <!-- Local stars controls -->
-        <div class="flex items-center gap-2 text-sm text-gray-300">
-          <span>Stars:</span>
-        </div>
-        <div>
-          <select
-            bind:value={starId}
-            id="ship-star"
-            class="custom-scrollbar md:w-full p-2 rounded bg-gray-800 text-white cursor-pointer"
-          >
-            {#each (searchQuery ? filteredStars : $starsList) as s}
-              <option value={s.id}>{s.name} — {s.distanceLy} ly</option>
-            {/each}
-          </select>
-        </div>
-        <div>
-          <label for="ship-speed" class="text-sm text-gray-300">Speed (% of c)</label>
-          <input
-            id="ship-speed"
-            type="number"
-            min="0.001"
-            max="99.999"
-            step="1"
-            bind:value={speedPercent}
-            class="w-full p-2 rounded bg-gray-800 text-white"
-          />
-        </div>
-        <button class="mt-2 w-full bg-blue-600 text-white p-2 rounded" onclick={addShip}
-          >Add Ship</button
-        >
-
-        <!-- star detail intentionally omitted here to avoid duplication; rendered in top-right area -->
       </div>
+      
+      <div>
+        <label for="ship-star" class="text-xs font-semibold text-gray-300 uppercase tracking-wide">Destination</label>
+        <select
+          bind:value={starId}
+          id="ship-star"
+          class="custom-scrollbar w-full p-2 rounded bg-gray-800 text-white cursor-pointer border border-gray-700 focus:border-gray-500 focus:outline-none text-sm"
+        >
+          {#each (searchQuery ? filteredStars : $starsList) as s}
+            <option value={s.id}>{s.name} — {s.distanceLy} ly</option>
+          {/each}
+        </select>
+      </div>
+      
+      <div>
+        <label for="ship-speed" class="text-xs font-semibold text-gray-300 uppercase tracking-wide">Speed (% of c)</label>
+        <input
+          id="ship-speed"
+          type="number"
+          min="0.001"
+          max="99.999"
+          step="1"
+          bind:value={speedPercent}
+          class="w-full p-2 rounded bg-gray-800 text-white border border-gray-700 focus:border-gray-500 focus:outline-none text-sm"
+        />
+      </div>
+      
+      <button 
+        class="w-full bg-gray-700 hover:bg-gray-600 text-white p-2 rounded font-medium transition-colors text-sm" 
+        onclick={addShip}
+      >
+        Add Ship
+      </button>
     </div>
   </div>
 
-  <div class="bg-gray-900 p-3 rounded">
-    <h3 class="text-white font-semibold">Active Ships</h3>
-    <ul class="mt-2 space-y-2">
-      {#each $ships as s}
-        <li class="flex items-center justify-between bg-gray-800 p-2 rounded h-15">
-          <div class="text-xs text-gray-400">
-            to {s.starId} @ {s.speedFraction * 100}% c
-          </div>
-          <div class="flex gap-2">
-            <button
-              class="text-sm px-2 bg-blue-600 hover:bg-blue-500 rounded text-white cursor-pointer"
-              onclick={() => selectedShipId.set(s.id)}>Focus</button
-            >
-            <button
-              class="text-sm px-2 bg-red-600 rounded text-white cursor-pointer h-6"
-              onclick={() => removeShip(s.id)}>Remove</button
-            >
-          </div>
-        </li>
-      {/each}
-    </ul>
+  <!-- Active Ships Section -->
+  <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg shadow-lg border border-gray-700 overflow-hidden">
+    <div class="bg-gray-800 px-3 py-2 border-b border-gray-700">
+      <h3 class="font-semibold text-white text-sm">Active Ships</h3>
+    </div>
+    <div class="p-3">
+      {#if $ships.length > 0}
+        <div class="space-y-1">
+          {#each $ships as s}
+            <div class="flex items-center justify-between bg-gray-800 p-2 rounded border border-gray-700">
+              <div class="text-xs">
+                <div class="text-gray-200 font-medium">{s.name || `Ship ${$ships.indexOf(s) + 1}`}</div>
+                <div class="text-xs text-gray-400">
+                  to {getStarById(s.starId)?.name || s.starId} @ {s.speedFraction * 100}% c
+                </div>
+              </div>
+              <div class="flex gap-1">
+                <button
+                  class="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-white cursor-pointer transition-colors"
+                  onclick={() => selectedShipId.set(s.id)}
+                >
+                  Focus
+                </button>
+                <button
+                  class="text-xs px-2 py-1 bg-red-700 hover:bg-red-600 rounded text-white cursor-pointer transition-colors"
+                  onclick={() => removeShip(s.id)}
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          {/each}
+        </div>
+      {:else}
+        <div class="text-xs text-gray-400 text-center py-2 bg-gray-800 rounded border border-gray-700">
+          No active ships
+        </div>
+      {/if}
+    </div>
   </div>
 </div>
 

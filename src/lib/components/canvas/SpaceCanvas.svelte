@@ -698,8 +698,8 @@
   <!-- sidebar - responsive design -->
   {#if sidebarOpen}
     <div
-      class="absolute left-2 top-20 bottom-2 md:left-4 md:top-20 md:bottom-4 z-50 hide-scrollbar w-[calc(100vw-1rem)] md:w-80 bg-gray-900/95 backdrop-blur-sm rounded-lg md:rounded-none"
-      style="overflow-y:auto; overflow-x:hidden; scrollbar-width:none; -ms-overflow-style:none; max-height: calc(100vh - 6rem);"
+      class="absolute left-2 top-20 bottom-2 md:left-4 md:bottom-4 z-50 hide-scrollbar w-[calc(100vw-1rem)] md:w-80 bg-transparent rounded-lg md:rounded-none"
+      style="overflow-y:auto; overflow-x:hidden; scrollbar-width:none; -ms-overflow-style:none;"
     >
       <div class="h-full">
         <Sidebar />
