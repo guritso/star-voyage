@@ -2,10 +2,12 @@
   import { starsList } from '$lib/stars';
   import { ships, selectedShipId, targetStarId } from '$lib/stores/ships';
   import { simTime } from '$lib/stores/simulation';
+  import { zoomToStarId } from '$lib/stores/stars';
   import { get } from 'svelte/store';
-  import type { ShipParams } from '$lib/types';
+  import type { ShipParams, Star } from '$lib/types';
 
   let name = $state('');
+  let searchQuery = $state('');
   // selected star id for new ships
   let starId = $state<string>('');
   // ensure starId is valid when starsList changes
@@ -72,9 +74,61 @@
   }
 
   let getTime = () => get(simTime);
+
+  // Filter stars based on search query
+  let filteredStars = $state<Star[]>([]);
+  
+  $effect(() => {
+    filteredStars = $starsList.filter((star: Star) => 
+      star.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  });
+
+  // Function to focus on a star
+  function focusOnStar(starId: string) {
+    zoomToStarId.set(starId);
+  }
 </script>
 
 <div class="space-y-4">
+  <!-- Search Section -->
+  <div class="bg-gray-900 p-3 rounded">
+    <h3 class="text-white font-semibold mb-2">Search Stars</h3>
+    <div class="space-y-2">
+      <input
+        placeholder="Type star name..."
+        bind:value={searchQuery}
+        class="w-full p-2 rounded bg-gray-800 text-white placeholder-gray-400"
+      />
+      {#if searchQuery && filteredStars.length > 0}
+        <div class="max-h-80 overflow-y-auto space-y-1">
+          {#each filteredStars.slice(0, 5) as star}
+            <div class="flex items-center justify-between bg-gray-800 p-2 rounded text-sm">
+              <div class="text-gray-200">
+                {star.name} — {star.distanceLy} ly
+              </div>
+              <button
+                class="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-500 rounded text-white cursor-pointer"
+                onclick={() => focusOnStar(star.id)}
+              >
+                Focus
+              </button>
+            </div>
+          {/each}
+          {#if filteredStars.length > 10}
+            <div class="text-xs text-gray-400 text-center">
+              Showing first 10 of {filteredStars.length} results
+            </div>
+          {/if}
+        </div>
+      {:else if searchQuery && filteredStars.length === 0}
+        <div class="text-sm text-gray-400 text-center py-2">
+          No stars found matching "{searchQuery}"
+        </div>
+      {/if}
+    </div>
+  </div>
+
   <div class="bg-gray-900 p-3 rounded">
     <h3 class="text-white font-semibold">Add Ship</h3>
     <div class="mt-2 flex gap-3">
@@ -97,7 +151,7 @@
             id="ship-star"
             class="custom-scrollbar md:w-full p-2 rounded bg-gray-800 text-white cursor-pointer"
           >
-            {#each $starsList as s}
+            {#each (searchQuery ? filteredStars : $starsList) as s}
               <option value={s.id}>{s.name} — {s.distanceLy} ly</option>
             {/each}
           </select>
