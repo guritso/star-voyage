@@ -8,7 +8,7 @@ import type { Star } from '../types';
  * @returns Normalized string
  */
 export function normalizeString(str: string): string {
-  return str.toLowerCase().trim();
+    return str.toLowerCase().trim();
 }
 
 /**
@@ -17,22 +17,22 @@ export function normalizeString(str: string): string {
  * @returns Deduplicated array of stars
  */
 export function deduplicateStars(stars: Star[]): Star[] {
-  const byName = new Map<string, Star>();
+    const byName = new Map<string, Star>();
 
-  for (const star of stars) {
-    const key = normalizeString(star.name);
-    if (!byName.has(key)) {
-      byName.set(key, star);
-    } else {
-      // prefer entry with smaller distance (closer) if duplicate name
-      const prev = byName.get(key)!;
-      if (star.distanceLy < prev.distanceLy) {
-        byName.set(key, star);
-      }
+    for (const star of stars) {
+        const key = normalizeString(star.name);
+        if (!byName.has(key)) {
+            byName.set(key, star);
+        } else {
+            // prefer entry with smaller distance (closer) if duplicate name
+            const prev = byName.get(key)!;
+            if (star.distanceLy < prev.distanceLy) {
+                byName.set(key, star);
+            }
+        }
     }
-  }
 
-  return Array.from(byName.values());
+    return Array.from(byName.values());
 }
 
 /**
@@ -41,7 +41,7 @@ export function deduplicateStars(stars: Star[]): Star[] {
  * @returns Sorted array of stars
  */
 export function sortStarsByDistance(stars: Star[]): Star[] {
-  return [...stars].sort((a, b) => a.distanceLy - b.distanceLy);
+    return [...stars].sort((a, b) => a.distanceLy - b.distanceLy);
 }
 
 /**
@@ -51,7 +51,7 @@ export function sortStarsByDistance(stars: Star[]): Star[] {
  * @returns Found star or undefined
  */
 export function findStarById(stars: Star[], id: string): Star | undefined {
-  return stars.find((star) => star.id === id);
+    return stars.find((star) => star.id === id);
 }
 
 /**
@@ -60,5 +60,5 @@ export function findStarById(stars: Star[], id: string): Star | undefined {
  * @returns Unique ID
  */
 export function generateStarId(name: string): string {
-  return normalizeString(name).replace(/\s+/g, '-');
+    return normalizeString(name).replace(/\s+/g, '-');
 }

@@ -5,21 +5,21 @@ import { deduplicateStars, sortStarsByDistance, findStarById } from '$lib/utils'
 // Use local stars as default
 export const stars = writable<Star[]>([]);
 export const starsList = derived([stars], ([$data]) => {
-  return sortStarsByDistance($data);
+    return sortStarsByDistance($data);
 });
 
 export async function loadAllStars() {
-  const list = await fetchLocalStars();
+    const list = await fetchLocalStars();
 
-  // Sort nearer first and deduplicate
-  const sortedStars = sortStarsByDistance(list);
-  const uniqueStars = deduplicateStars(sortedStars);
+    // Sort nearer first and deduplicate
+    const sortedStars = sortStarsByDistance(list);
+    const uniqueStars = deduplicateStars(sortedStars);
 
-  stars.set(uniqueStars);
-  return uniqueStars.length;
+    stars.set(uniqueStars);
+    return uniqueStars.length;
 }
 
 export function getStarById(id: string) {
-  const current = get(starsList);
-  return findStarById(current, id);
+    const current = get(starsList);
+    return findStarById(current, id);
 }

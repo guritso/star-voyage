@@ -9,9 +9,9 @@ import type { ShipParams, ShipMetrics } from '../types';
  * @returns Lorentz factor
  */
 export function gamma(vFraction: number): number {
-  const v = vFraction;
-  const denom = Math.sqrt(1 - v * v);
-  return 1 / denom;
+    const v = vFraction;
+    const denom = Math.sqrt(1 - v * v);
+    return 1 / denom;
 }
 
 /**
@@ -20,7 +20,7 @@ export function gamma(vFraction: number): number {
  * @returns Proper time factor
  */
 export function properTimeFactor(vFraction: number): number {
-  return Math.sqrt(1 - vFraction * vFraction);
+    return Math.sqrt(1 - vFraction * vFraction);
 }
 
 /**
@@ -29,7 +29,7 @@ export function properTimeFactor(vFraction: number): number {
  * @returns Number of seconds
  */
 export function yearsToSeconds(years: number): number {
-  return years * TIME_CONVERSION.SECONDS_PER_YEAR;
+    return years * TIME_CONVERSION.SECONDS_PER_YEAR;
 }
 
 /**
@@ -38,7 +38,7 @@ export function yearsToSeconds(years: number): number {
  * @returns Distance in light-years
  */
 export function metersToLy(meters: number): number {
-  return meters / LIGHT_YEAR_IN_METERS;
+    return meters / LIGHT_YEAR_IN_METERS;
 }
 
 /**
@@ -47,7 +47,7 @@ export function metersToLy(meters: number): number {
  * @returns Distance in meters
  */
 export function lyToMeters(ly: number): number {
-  return ly * LIGHT_YEAR_IN_METERS;
+    return ly * LIGHT_YEAR_IN_METERS;
 }
 
 /**
@@ -58,46 +58,46 @@ export function lyToMeters(ly: number): number {
  * @returns Ship metrics including distances, times, and relativistic effects
  */
 export function shipMetrics(
-  ship: ShipParams,
-  starDistanceLy: number,
-  simTimeYears: number
+    ship: ShipParams,
+    starDistanceLy: number,
+    simTimeYears: number
 ): ShipMetrics {
-  const v = ship.speedFraction; // fraction of c
+    const v = ship.speedFraction; // fraction of c
 
-  // Using natural units: 1 ly per year for light. So if v is fraction of c,
-  // speed in ly/year = v. This simplifies many calculations and avoids
-  // unnecessary meter/second conversions.
-  const elapsedYears = Math.max(0, simTimeYears - ship.startTime);
+    // Using natural units: 1 ly per year for light. So if v is fraction of c,
+    // speed in ly/year = v. This simplifies many calculations and avoids
+    // unnecessary meter/second conversions.
+    const elapsedYears = Math.max(0, simTimeYears - ship.startTime);
 
-  const totalDistanceLy = starDistanceLy;
-  // distance travelled in light-years = v (ly/year) * elapsedYears (years)
-  const distanceLy = v * elapsedYears;
-  const distanceCoveredLy = Math.min(distanceLy, totalDistanceLy);
-  const distanceRemainingLy = Math.max(0, totalDistanceLy - distanceCoveredLy);
+    const totalDistanceLy = starDistanceLy;
+    // distance travelled in light-years = v (ly/year) * elapsedYears (years)
+    const distanceLy = v * elapsedYears;
+    const distanceCoveredLy = Math.min(distanceLy, totalDistanceLy);
+    const distanceRemainingLy = Math.max(0, totalDistanceLy - distanceCoveredLy);
 
-  const timeTerraYears = elapsedYears;
-  const tauFactor = properTimeFactor(v);
-  const timeShipYears = timeTerraYears * tauFactor;
+    const timeTerraYears = elapsedYears;
+    const tauFactor = properTimeFactor(v);
+    const timeShipYears = timeTerraYears * tauFactor;
 
-  const timeRemainingTerraYears = v > 0 ? distanceRemainingLy / v : Infinity;
-  const timeRemainingShipYears = timeRemainingTerraYears * tauFactor;
+    const timeRemainingTerraYears = v > 0 ? distanceRemainingLy / v : Infinity;
+    const timeRemainingShipYears = timeRemainingTerraYears * tauFactor;
 
-  const lorentz = gamma(v);
+    const lorentz = gamma(v);
 
-  // arrival (Earth simulation year) and confirmation year (Earth receives light/signal)
-  const timeOfArrivalTerra = ship.startTime + totalDistanceLy / Math.max(v, 1e-12);
-  const timeOfConfirmationTerra = timeOfArrivalTerra + totalDistanceLy; // light takes distance (years) to return
+    // arrival (Earth simulation year) and confirmation year (Earth receives light/signal)
+    const timeOfArrivalTerra = ship.startTime + totalDistanceLy / Math.max(v, 1e-12);
+    const timeOfConfirmationTerra = timeOfArrivalTerra + totalDistanceLy; // light takes distance (years) to return
 
-  return {
-    elapsedYears,
-    distanceCoveredLy,
-    distanceRemainingLy,
-    timeTerraYears,
-    timeShipYears,
-    timeRemainingTerraYears,
-    timeRemainingShipYears,
-    lorentz,
-    timeOfConfirmationTerra,
-    timeOfArrivalTerra,
-  };
+    return {
+        elapsedYears,
+        distanceCoveredLy,
+        distanceRemainingLy,
+        timeTerraYears,
+        timeShipYears,
+        timeRemainingTerraYears,
+        timeRemainingShipYears,
+        lorentz,
+        timeOfConfirmationTerra,
+        timeOfArrivalTerra,
+    };
 }

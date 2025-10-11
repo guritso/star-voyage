@@ -14,18 +14,18 @@ import { CANVAS_CONFIG } from '../constants';
  * @returns Screen coordinates
  */
 export function worldToScreen(
-  worldX: number,
-  worldY: number,
-  scale: number,
-  panX: number,
-  panY: number,
-  centerX: number,
-  centerY: number
+    worldX: number,
+    worldY: number,
+    scale: number,
+    panX: number,
+    panY: number,
+    centerX: number,
+    centerY: number
 ): { x: number; y: number } {
-  return {
-    x: centerX + worldX * scale + panX,
-    y: centerY + worldY * scale + panY,
-  };
+    return {
+        x: centerX + worldX * scale + panX,
+        y: centerY + worldY * scale + panY,
+    };
 }
 
 /**
@@ -40,18 +40,18 @@ export function worldToScreen(
  * @returns World coordinates
  */
 export function screenToWorld(
-  screenX: number,
-  screenY: number,
-  scale: number,
-  panX: number,
-  panY: number,
-  centerX: number,
-  centerY: number
+    screenX: number,
+    screenY: number,
+    scale: number,
+    panX: number,
+    panY: number,
+    centerX: number,
+    centerY: number
 ): { x: number; y: number } {
-  return {
-    x: (screenX - centerX - panX) / scale,
-    y: (screenY - centerY - panY) / scale,
-  };
+    return {
+        x: (screenX - centerX - panX) / scale,
+        y: (screenY - centerY - panY) / scale,
+    };
 }
 
 /**
@@ -63,9 +63,9 @@ export function screenToWorld(
  * @returns Distance between points
  */
 export function distance(x1: number, y1: number, x2: number, y2: number): number {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  return Math.sqrt(dx * dx + dy * dy);
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    return Math.sqrt(dx * dx + dy * dy);
 }
 
 /**
@@ -76,7 +76,7 @@ export function distance(x1: number, y1: number, x2: number, y2: number): number
  * @returns Clamped value
  */
 export function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
+    return Math.min(Math.max(value, min), max);
 }
 
 /**
@@ -89,11 +89,11 @@ export function clamp(value: number, min: number, max: number): number {
  * @returns Scaled value
  */
 export function scaleValue(
-  value: number,
-  oldMin: number,
-  oldMax: number,
-  newMin: number,
-  newMax: number
+    value: number,
+    oldMin: number,
+    oldMax: number,
+    newMin: number,
+    newMax: number
 ): number {
-  return ((value - oldMin) / (oldMax - oldMin)) * (newMax - newMin) + newMin;
+    return ((value - oldMin) / (oldMax - oldMin)) * (newMax - newMin) + newMin;
 }
