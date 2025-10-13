@@ -2,7 +2,7 @@ import type { Star } from '$lib/types';
 import csv from '$lib/assets/stars.csv?raw';
 
 export type LocalCsvRow = {
-    ID: string;
+    id: string;
     name: string;
     constellation: string;
     RA_hour: number;
@@ -20,15 +20,6 @@ function hmsToHours(h: number, m: number, s: number): number | null {
     const value = h + m / 60 + s / 3600;
     return Number.isFinite(value) ? value : null;
 }
-
-function slugify(input: string): string {
-    return input
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '')
-        .slice(0, 40);
-}
-
 // Cache for local data
 let localStarsCache: LocalCsvRow[] | null = null;
 
@@ -40,9 +31,8 @@ async function loadLocalStars(): Promise<LocalCsvRow[]> {
     try {
         const lines = csv.trim().split('\n');
         const dataLines = lines.slice(1); // skip header
-        const stars: LocalCsvRow[] = dataLines.map((line) => {
+        const stars: LocalCsvRow[] = dataLines.map((line, index) => {
             const [
-                id,
                 name,
                 constellation,
                 raHour,
@@ -55,7 +45,7 @@ async function loadLocalStars(): Promise<LocalCsvRow[]> {
                 lyDistance,
             ] = line.split(',');
             return {
-                ID: id,
+                id: index.toString(),
                 name: name,
                 constellation: constellation,
                 RA_hour: Number(raHour),
@@ -99,11 +89,8 @@ export async function fetchLocalStars(): Promise<Star[]> {
     const mapped: Star[] = filteredStars.map((item, index) => {
         const raHours = hmsToHours(item.RA_hour, item.RA_min, item.RA_sec) ?? undefined;
 
-        const baseId = slugify(item.name || `star-${index}`);
-        const id = `local-${baseId}-${index}`;
-
         return {
-            id,
+            id: item.id,
             name: item.name || `Star ${index}`,
             distanceLy: item.LY_distance,
             raHours,
