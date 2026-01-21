@@ -13,26 +13,26 @@
         <h3 class="text-white text-sm mb-3">{star.name}</h3>
 
         <div class="space-y-3 text-xs">
-            <div class="flex justify-between">
+            <div class="flex justify-between gap-2">
                 <span class="text-gray-400">Distance</span>
                 <span class="text-white">{star.distanceLy} ly</span>
             </div>
-            
+
             {#if star.constellation}
-                <div class="flex justify-between">
-                    <span class="text-gray-400 mr-2">Constellation</span>
+                <div class="flex justify-between gap-2">
+                    <span class="text-gray-400">Constellation</span>
                     <span class="text-white">{star.constellation}</span>
                 </div>
             {/if}
 
             {#if star.magnitude}
-                <div class="flex justify-between">
+                <div class="flex justify-between gap-2">
                     <span class="text-gray-400">Magnitude</span>
                     <span class="text-white">{star.magnitude}</span>
                 </div>
             {/if}
 
-            <div class="flex justify-between">
+            <div class="flex justify-between gap-2">
                 <span class="text-gray-400">Light time</span>
                 <span class="text-white">{star.distanceLy} years</span>
             </div>

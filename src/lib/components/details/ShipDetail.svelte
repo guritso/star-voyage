@@ -118,15 +118,15 @@
                     </div>
                 </div>
 
-                <div class="flex justify-between">
+                <div class="flex justify-between gap-2">
                     <span class="text-gray-400">Earth time</span>
                     <span class="text-white">{formatYears(displayTimeTerra)}</span>
                 </div>
-                <div class="flex justify-between">
+                <div class="flex justify-between gap-2">
                     <span class="text-gray-400">Ship time</span>
                     <span class="text-white">{formatYears(displayTimeShip)}</span>
                 </div>
-                <div class="flex justify-between">
+                <div class="flex justify-between gap-2">
                     <span class="text-gray-400">Remaining</span>
                     <span class="text-white">{formatLy(metrics.distanceRemainingLy)}</span>
                 </div>
