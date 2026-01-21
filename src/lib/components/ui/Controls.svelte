@@ -66,125 +66,88 @@
     }
 </script>
 
-<!-- Mobile-first responsive controls -->
-<div class="flex flex-col gap-3 md:flex-row md:items-center md:gap-2">
-    <!-- Main controls - always visible -->
-    <div class="flex items-center justify-center gap-2">
-        <!-- Compact control group: reset, decelerate, step back, play/pause, step forward, accelerate -->
+<div class="flex flex-col gap-2 md:flex-row items-center md:gap-3">
+    <div class="flex items-center gap-1">
         <button
-            aria-label="Reset"
-            title="Reset"
-            class="w-11 h-11 md:w-10 md:h-10 flex items-center justify-center bg-gray-800 rounded"
+            class="w-9 h-9 flex items-center justify-center bg-gray-800 rounded"
             onclick={resetSim}
         >
-            <RotateCcw size="18" color="white" />
+            <RotateCcw size="16" color="white" />
         </button>
         <button
-            aria-label="Decelerate"
-            title="Decelerate"
-            class="w-11 h-11 md:w-10 md:h-10 flex items-center justify-center bg-gray-800 rounded"
+            class="w-9 h-9 flex items-center justify-center bg-gray-800 rounded"
             onclick={() => {
                 speedVal = Math.max(0.01, speedVal / 2);
             }}
         >
-            <Rewind size="18" color="white" />
+            <Rewind size="16" color="white" />
         </button>
         <button
-            aria-label="Step Back"
-            title="Step Back 1y"
-            class="w-11 h-11 md:w-10 md:h-10 flex items-center justify-center bg-gray-800 rounded"
+            class="w-9 h-9 flex items-center justify-center bg-gray-800 rounded"
             onclick={stepBackward}
         >
-            <SkipBack size="18" color="white" />
+            <SkipBack size="16" color="white" />
         </button>
         <button
-            aria-label="Play/Pause"
-            title="Play/Pause"
-            class="w-11 h-11 md:w-10 md:h-10 flex items-center justify-center bg-gray-800 rounded"
+            class="w-9 h-9 flex items-center justify-center bg-gray-800 rounded"
             onclick={togglePlay}
         >
             {#if playing}
-                <Pause size="20" color="white" />
+                <Pause size="18" color="white" />
             {:else}
-                <Play size="20" color="white" />
+                <Play size="18" color="white" />
             {/if}
         </button>
         <button
-            aria-label="Step Forward"
-            title="Step Forward 1y"
-            class="w-11 h-11 md:w-10 md:h-10 flex items-center justify-center bg-gray-800 rounded"
+            class="w-9 h-9 flex items-center justify-center bg-gray-800 rounded"
             onclick={stepForward}
         >
-            <SkipForward size="18" color="white" />
+            <SkipForward size="16" color="white" />
         </button>
         <button
-            aria-label="Accelerate"
-            title="Accelerate"
-            class="w-11 h-11 md:w-10 md:h-10 flex items-center justify-center bg-gray-800 rounded"
+            class="w-9 h-9 flex items-center justify-center bg-gray-800 rounded"
             onclick={() => {
                 speedVal = Math.min(1000, speedVal * 2);
             }}
         >
-            <FastForward size="18" color="white" />
+            <FastForward size="16" color="white" />
         </button>
     </div>
 
-    <!-- Secondary controls - mobile responsive -->
-    <div class="flex flex-col gap-2 md:flex-row md:items-center md:gap-4 md:ml-4">
-        <!-- Sim time display - compact on mobile -->
-        <div
-            class="flex items-center justify-center gap-2 text-center bg-gray-800 p-2 rounded md:text-right"
+    <div class="flex items-center gap-3">
+        <div class="h-9 flex items-center bg-gray-800 px-2 py-1 rounded text-xs text-white">
+            Time: {$simTime.toFixed(1)}y
+        </div>
+
+        <div class="h-9 flex items-center gap-2 bg-gray-800 px-2 py-1 rounded">
+            <span class="text-xs text-gray-400">Speed:</span>
+            <input
+                id="sim-speed"
+                type="range"
+                min="0.01"
+                max="1000"
+                step="0.01"
+                bind:value={speedVal}
+                class="w-16"
+            />
+            <span class="text-xs text-gray-400">{speedVal.toFixed(2)}y</span>
+        </div>
+
+        <button
+            class="w-9 h-9 flex items-center justify-center bg-gray-800 rounded"
+            onclick={toggleTag}
         >
-            <div class="text-xs text-gray-300 md:text-sm">Time:</div>
-            <div class="text-white text-xs md:text-sm">{$simTime.toFixed(1)}y</div>
-            <div class="text-gray-400 text-xs md:block">({Math.round($simTime * 365.25)}days)</div>
-        </div>
-
-        <!-- Speed control - mobile friendly -->
-        <div class="flex items-center gap-2 bg-gray-800 p-2 rounded">
-            <label for="sim-speed" class="text-xs text-gray-300 md:text-sm">Speed:</label>
-            <div class="flex items-center gap-2 min-w-0">
-                <input
-                    id="sim-speed"
-                    type="range"
-                    min="0.01"
-                    max="1000"
-                    step="0.01"
-                    bind:value={speedVal}
-                    class="w-16 md:w-20 md:mx-2"
-                />
-                <div class="text-gray-400 text-xs whitespace-nowrap">{speedVal.toFixed(2)}y</div>
-            </div>
-        </div>
-
-        <!-- Tag toggle -->
-        <div class="flex justify-center">
-            <button
-                aria-label="tag-on/off"
-                title="Tag on/off"
-                class="w-11 h-11 md:w-10 md:h-10 flex items-center justify-center bg-gray-800 rounded"
-                onclick={toggleTag}
-            >
-                {#if tagStatus}
-                    <Tag size="18" color="white" />
-                {:else}
-                    <Tag size="18" color="gray" />
-                {/if}
-            </button>
-        </div>
+            {#if tagStatus}
+                <Tag size="16" color="white" />
+            {:else}
+                <Tag size="16" color="gray" />
+            {/if}
+        </button>
     </div>
 </div>
 
 <style>
     button {
         cursor: pointer;
-    }
-
-    button:hover {
-        opacity: 0.9;
-    }
-
-    button:active {
-        opacity: 0.8;
     }
 </style>

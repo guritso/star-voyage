@@ -641,7 +641,7 @@
         <div class="flex items-center gap-2">
             <!-- sidebar toggle - mobile friendly -->
             <button
-                class="w-10 h-10 md:w-10 md:h-10 rounded-full bg-gray-800 flex items-center justify-center shadow cursor-pointer hover:bg-gray-700 transition-colors {sidebarOpen
+                class="w-10 h-10 rounded bg-gray-800 flex items-center justify-center cursor-pointer {sidebarOpen
                     ? 'bg-gray-700'
                     : ''}"
                 onclick={toggleSidebar}
@@ -671,7 +671,7 @@
 
     <!-- Mobile controls overlay -->
     <div class="md:hidden absolute bottom-16 left-2 right-2 z-50">
-        <div class="bg-gray-900/90 backdrop-blur-sm rounded-lg p-3 max-h-64 overflow-y-auto">
+        <div class="bg-gray-900/90 rounded p-3 max-h-64 overflow-y-auto">
             <Controls />
         </div>
     </div>
@@ -690,9 +690,9 @@
             </div>
         {:else}
             <div
-                class="p-3 bg-gray-900/80 backdrop-blur-sm rounded text-sm text-gray-200 max-w-[280px] md:max-w-none"
+                class="p-3 bg-gray-900/90 rounded text-xs text-gray-400 max-w-[280px] md:max-w-none"
             >
-                Click a ship to see details
+                Click a ship or star
             </div>
         {/if}
     </div>
@@ -723,7 +723,7 @@
             <!-- Action buttons -->
             <div class="flex gap-2">
                 <button
-                    class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center shadow-lg transition-colors"
+                    class="w-10 h-10 rounded bg-gray-800 flex items-center justify-center"
                     onclick={centerSun}
                     aria-label="Center on Sun"
                     title="Center on Sun"
@@ -748,7 +748,7 @@
 
                 {#if followShip}
                     <button
-                        class="w-10 h-10 rounded-full bg-red-600 hover:bg-red-500 flex items-center justify-center shadow-lg transition-colors"
+                        class="w-10 h-10 rounded bg-red-700 flex items-center justify-center"
                         onclick={stopFollow}
                         aria-label="Stop following ship"
                         title="Stop following ship"
@@ -793,8 +793,4 @@
         cursor: grabbing;
     }
 
-    /* smooth transitions for UI elements */
-    button {
-        transition: all 0.2s ease;
-    }
 </style>
