@@ -40,6 +40,11 @@
     let panStartX = 0;
     let panStartY = 0;
     let didDrag = false;
+    const activePointers = new Map<number, { x: number; y: number }>();
+    let pinchStartDistance = 0;
+    let pinchStartScale = 1000;
+    let pinchAnchorWorldX = 0;
+    let pinchAnchorWorldY = 0;
 
     // schedule redraw to avoid nested effect loops
     let drawScheduled = false;
@@ -329,20 +334,64 @@
     }
 
     // --- Pan & zoom handlers ---
+    function applyZoomAtPoint(nextScale: number, cx: number, cy: number) {
+        const clampedScale = Math.min(maxZoomIn, Math.max(maxZoomOut, nextScale));
+
+        const worldX = (cx - w / 2 - panX) / (scale / 60);
+        const worldY = (cy - h / 2 - panY) / (scale / 60);
+
+        scale = clampedScale;
+        panX = cx - w / 2 - worldX * (scale / 60);
+        panY = cy - h / 2 - worldY * (scale / 60);
+        scheduleDraw();
+    }
+
+    function getPinchSnapshot() {
+        const pointers = [...activePointers.values()];
+        if (pointers.length < 2) return null;
+
+        const [a, b] = pointers;
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        return {
+            centerX: (a.x + b.x) / 2,
+            centerY: (a.y + b.y) / 2,
+            distance: Math.hypot(dx, dy),
+        };
+    }
+
     function onPointerDown(e: PointerEvent) {
-        if (e.button !== 0) return; // only left button
+        if (e.pointerType === 'mouse' && e.button !== 0) return; // only left button
         // User is taking manual control; disable auto-follow
         followShip = false;
-        isDragging = true;
+        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
         didDrag = false;
-        dragStartX = e.clientX;
-        dragStartY = e.clientY;
-        panStartX = panX;
-        panStartY = panY;
+
+        if (activePointers.size === 1) {
+            isDragging = true;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            panStartX = panX;
+            panStartY = panY;
+        } else if (activePointers.size === 2) {
+            isDragging = false;
+            const pinch = getPinchSnapshot();
+            if (pinch) {
+                const rect = canvas.getBoundingClientRect();
+                pinchStartDistance = pinch.distance;
+                pinchStartScale = scale;
+                pinchAnchorWorldX = (pinch.centerX - rect.left - w / 2 - panX) / (scale / 60);
+                pinchAnchorWorldY = (pinch.centerY - rect.top - h / 2 - panY) / (scale / 60);
+            }
+        }
         (e.target as Element).setPointerCapture?.(e.pointerId);
     }
 
     function onPointerMove(e: PointerEvent) {
+        if (activePointers.has(e.pointerId)) {
+            activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        }
+
         const rect = canvas.getBoundingClientRect();
         const cx = e.clientX - rect.left;
         const cy = e.clientY - rect.top;
@@ -353,6 +402,21 @@
 
         cursorX = worldX;
         cursorY = worldY;
+
+        if (activePointers.size >= 2) {
+            const pinch = getPinchSnapshot();
+            if (!pinch || pinchStartDistance <= 0) return;
+            didDrag = true;
+            suppressFollow = true;
+            scale = Math.min(
+                maxZoomIn,
+                Math.max(maxZoomOut, pinchStartScale * (pinch.distance / pinchStartDistance))
+            );
+            panX = pinch.centerX - rect.left - w / 2 - pinchAnchorWorldX * (scale / 60);
+            panY = pinch.centerY - rect.top - h / 2 - pinchAnchorWorldY * (scale / 60);
+            scheduleDraw();
+            return;
+        }
 
         if (!isDragging) return;
 
@@ -365,7 +429,28 @@
     }
 
     function onPointerUp(e: PointerEvent) {
-        isDragging = false;
+        activePointers.delete(e.pointerId);
+        const remainingPointer = activePointers.values().next().value;
+        if (activePointers.size === 1 && remainingPointer) {
+            isDragging = true;
+            dragStartX = remainingPointer.x;
+            dragStartY = remainingPointer.y;
+            panStartX = panX;
+            panStartY = panY;
+        } else if (activePointers.size === 0) {
+            isDragging = false;
+            pinchStartDistance = 0;
+        } else if (activePointers.size >= 2) {
+            const pinch = getPinchSnapshot();
+            if (pinch) {
+                const rect = canvas.getBoundingClientRect();
+                pinchStartDistance = pinch.distance;
+                pinchStartScale = scale;
+                pinchAnchorWorldX = (pinch.centerX - rect.left - w / 2 - panX) / (scale / 60);
+                pinchAnchorWorldY = (pinch.centerY - rect.top - h / 2 - panY) / (scale / 60);
+            }
+            isDragging = false;
+        }
         (e.target as Element).releasePointerCapture?.(e.pointerId);
     }
 
@@ -379,15 +464,7 @@
         const cy = e.clientY - rect.top;
 
         // convert screen coords to world coords
-        const worldX = (cx - w / 2 - panX) / (scale / 60);
-        const worldY = (cy - h / 2 - panY) / (scale / 60);
-
-        scale = Math.min(maxZoomIn, Math.max(maxZoomOut, scale * zoomFactor));
-
-        // after changing scale, keep world point under cursor by adjusting pan
-        panX = cx - w / 2 - worldX * (scale / 60);
-        panY = cy - h / 2 - worldY * (scale / 60);
-        scheduleDraw();
+        applyZoomAtPoint(scale * zoomFactor, cx, cy);
         // release suppression next frame so subsequent renders may re-center if user re-enables follow
         requestAnimationFrame(() => {
             suppressFollow = false;
@@ -517,6 +594,7 @@
         c.addEventListener('pointerdown', onPointerDown);
         window.addEventListener('pointermove', onPointerMove);
         window.addEventListener('pointerup', onPointerUp);
+        window.addEventListener('pointercancel', onPointerUp);
         c.addEventListener('wheel', onWheel, { passive: false } as any);
         c.addEventListener('click', handleClick);
         scheduleDraw();
@@ -526,6 +604,7 @@
             c.removeEventListener('wheel', onWheel as any);
             window.removeEventListener('pointermove', onPointerMove);
             window.removeEventListener('pointerup', onPointerUp);
+            window.removeEventListener('pointercancel', onPointerUp);
         };
     });
 
